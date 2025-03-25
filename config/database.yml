@@ -1,0 +1,14 @@
+default_env: &default
+  adapter: postgresql
+  encoding: unicode
+  database: camp_activity
+
+development:
+  <<: *default
+
+production:
+  <<: *default
+  host: dpg-cvhj1klrie7s73e79960-a
+  database: springcamp_original
+  username: springcamp_original_user
+  password: 9XOAyloaQSEuu241NIiSPp71ZldHO8uy
