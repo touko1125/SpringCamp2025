@@ -18,6 +18,22 @@ options "*" do
     200
 end
 
+get '/' do
+    erb :index
+end
+
+get '/top' do
+    erb :top
+end
+
+get '/edit' do
+    erb :edit
+end
+
+get '/login' do
+    erb :camera
+end
+
 post '/login', provides: :json do
     params = JSON.parse(request.body.read)
     name = params['name']

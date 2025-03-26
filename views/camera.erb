@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ハルフォト - カメラ画面</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    body {
+      background-color: #333; /* 周りを暗く */
+      color: #fff;
+    }
+    .camera-wrapper {
+      background-color: #fff;
+      color: #000;
+      max-width: 400px;
+      margin: 40px auto;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <!-- ロゴ画像があれば <img src="assets/header-logo.png" class="header-logo" alt="Life is Tech! ハルフォト" /> -->
+    <!-- または文字だけでもOK -->
+    <img src="assets/header-logo.png" class="header-logo" alt="Life is Tech! ハルフォト" />
+    <h1 class="header-title"><a href="/top">Life is Tech! ハルフォト</a></h1>
+  </header>
+
+  <div class="camera-wrapper">
+    <h2>写真を撮影しよう！</h2>
+    <video id="cameraVideo" autoplay playsinline class="camera-video"></video>
+
+    <div class="btn-group" style="margin-top: 10px;">
+      <button id="switchButton">カメラ切り替え</button>
+      <button id="takePhotoButton">撮影</button>
+    </div>
+  </div>
+
+  <script src="scripts/camera.js"></script>
+</body>
+</html>
