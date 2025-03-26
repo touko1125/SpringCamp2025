@@ -139,7 +139,8 @@ window.addEventListener("DOMContentLoaded", () => {
         const selectedMentor = localStorage.getItem("selectedMentor") || "共通";
 
         // 4) サーバに JSON 送信
-        return fetch("http://localhost:4567/post/albumn", {
+        //return fetch("http://localhost:4567/post/albumn", {
+          return fetch("https://springcamp2025.onrender.com/post/albumn", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -197,7 +198,8 @@ function fetchLayoutFromServer(user) {
   if (!corkBoard) return;
 
   // 例: GET /album/:username で { layout: [ ... ] } を受け取る想定
-  const url = `http://localhost:4567/album/${encodeURIComponent(user)}`;
+  //const url = `http://localhost:4567/album/${encodeURIComponent(user)}`;
+  const url = `https://springcamp2025.onrender.com/album/${encodeURIComponent(user)}`;
   fetch(url)
     .then(res => res.json())
     .then(data => {

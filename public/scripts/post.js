@@ -139,7 +139,8 @@ postButton.addEventListener("click", () => {
   };
 
   // サーバ送信
-  fetch("http://localhost:4567/post", {
+  //fetch("http://localhost:4567/post", {
+    fetch("https://springcamp2025.onrender.com/post", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(postData)
