@@ -11,13 +11,28 @@ Place.create!(
     name: "toko"
 )
 
-# 早稲田大学のユーザー
-User.create!(
-    username: "共通",
-    password: "waseda",
-    place_id: 1
+# テーマ
+Theme.create!(
+    name: "#お昼の瞬間"
 )
 
+Theme.create!(
+    name: "#桜の瞬間"
+)
+
+Theme.create!(
+    name: "#友達は宝★な瞬間"
+)
+
+Theme.create!(
+    name: "#開発の瞬間"
+)
+
+Theme.create!(
+    name: "#自撮りの瞬間"
+)
+
+# ユーザー
 User.create!(
     username: "ほのぴ",
     password: "honopi",

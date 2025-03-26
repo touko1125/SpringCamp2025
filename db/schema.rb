@@ -10,10 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2025_03_25_144248) do
+ActiveRecord::Schema.define(version: 2025_03_26_162000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "layouts", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "item_type"
+    t.integer "target_id"
+    t.integer "x"
+    t.integer "y"
+    t.integer "width"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
 
   create_table "places", force: :cascade do |t|
     t.string "name"
@@ -27,8 +38,14 @@ ActiveRecord::Schema.define(version: 2025_03_25_144248) do
     t.string "img_link"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.bigint "theme_id"
     t.index ["place_id"], name: "index_posts_on_place_id"
+    t.index ["theme_id"], name: "index_posts_on_theme_id"
     t.index ["user_id"], name: "index_posts_on_user_id"
+  end
+
+  create_table "themes", force: :cascade do |t|
+    t.string "name"
   end
 
   create_table "users", force: :cascade do |t|
@@ -41,6 +58,7 @@ ActiveRecord::Schema.define(version: 2025_03_25_144248) do
   end
 
   add_foreign_key "posts", "places"
+  add_foreign_key "posts", "themes"
   add_foreign_key "posts", "users"
   add_foreign_key "users", "places"
 end

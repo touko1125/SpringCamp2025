@@ -1,47 +1,93 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <title>ハルフォト ログイン</title>
+  <meta charset="UTF-8">
+  <title>Photo Album Challenge</title>
   <link rel="stylesheet" href="css/style.css" />
+  <!-- dom-to-image でコルクボードを画像保存するためのCDN -->
+  <script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/dist/dom-to-image.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Yusei+Magic&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- ★ ヘッダー -->
   <header class="header">
-    <!-- ロゴ画像があれば <img src="assets/header-logo.png" class="header-logo" alt="Life is Tech! ハルフォト" /> -->
-    <!-- または文字だけでもOK -->
-    <img src="assets/header-logo.png" class="header-logo" alt="Life is Tech! ハルフォト" />
-    <h1 class="header-title"><a href="/top">Life is Tech! ハルフォト</a></h1>
+    <img src="assets/header-logo.png" class="header-logo" alt="Photo Album Challenge" />
   </header>
 
-  <div class="container login-page">
-    <h2>ログイン</h2>
+  <div class="container">
+    <h1>瞬間を切り取れ！ ~Photo Album Challenge~</h1>
+    <p>お題に挑戦をして、チームのアルバムを作ろう！</p>
 
+    <!-- ① メンター選択（早稲田大学固定） -->
     <div class="form-group">
-      <label for="campSelect">キャンプ会場:</label>
-      <select id="campSelect">
-        <option value="">選択してください</option>
-        <option value="早稲田大学 2025.03.26-03.29">早稲田大学 2025.03.26-03.29</option>
-        <option value="東京大学 2025.04.01-04.05">東京大学 2025.03.31-04.02</option>
-        <option value="大阪大学 2025.05.10-05.14">東京科学大学 2025.04.04-04.06</option>
+      <select id="mentorSelect">
+        <option value="">自分のチームのメンターを選択してね！</option>
+        <!-- 早稲田大学用メンター例 -->
+        <option value="ほのぴ">ほのぴ</option>
+        <option value="キノヤ">キノヤ</option>
+        <option value="あいりす">あいりす</option>
+        <option value="だーす">だーす</option>
+        <option value="ことり/ダイキチ">ことり/ダイキチ</option>
+        <option value="さぁ坊">さぁ坊</option>
+        <option value="しーぷ">しーぷ</option>
+        <option value="ゆわ">ゆわ</option>
+        <option value="ぎる">ぎる</option>
+        <option value="ひとで">ひとで</option>
+        <option value="はーちぃ">はーちぃ</option>
+        <option value="島ちゃん">島ちゃん</option>
+        <option value="らい">らい</option>
+        <option value="まなち">まなち</option>
+        <option value="さくこ/まるぴ">さくこ/まるぴ</option>
+        <option value="かむり">かむり</option>
       </select>
     </div>
 
-    <div class="form-group">
-      <label for="mentorSelect">チーム名:</label>
-      <select id="mentorSelect" disabled>
-        <option value="">選択してください</option>
-      </select>
+    <!-- メンターを選ぶまでボタンは無効 -->
+    <button id="cameraButton" disabled>お題に挑戦！</button>
+
+    <!-- ④ コルクボードエリア（投稿画像＆スタンプをドラッグで移動・リサイズ） -->
+    <div class="cork-board-container" style="margin-bottom:20px;">
+      <!-- スマホでのドラッグやピンチ操作を有効にするため、タッチアクションを無効化 -->
+      <div class="cork-board" id="corkBoard" 
+           style="position:relative; width:800px; height:600px; touch-action:none; background:url('assets/cork.jpg');">
+      </div>
     </div>
 
-    <div class="form-group">
-      <label for="passwordInput">パスワード:</label>
-      <input type="password" id="passwordInput" />
+    <!-- ② スタンプ一覧（クリックでコルクボードに貼り付け） -->
+    <h3>スタンプ一覧</h3>
+    <div class="stamp-list" id="stampList" style="margin-bottom:20px;">
+      <!-- 一例として、stamps/course/ai_creative.png にはデータ属性 data-stamp-id="1" を付与 -->
+      <div class="stamp-section" id="course">
+        <img src="stamps/course/ai_creative.png" alt="AI" data-stamp-id="1"/>
+        <img src="stamps/course/android.png" alt="Android" data-stamp-id="2"/>
+        <img src="stamps/course/animation.png" alt="Animation" data-stamp-id="3"/>
+        <img src="stamps/course/camera.png" alt="Camera" data-stamp-id="4"/>
+        <img src="stamps/course/designer.png" alt="Designer" data-stamp-id="5"/>
+        <img src="stamps/course/digital_music.png" alt="DigitalMusic" data-stamp-id="6"/>
+        <img src="stamps/course/iphone.png" alt="iPhone" data-stamp-id="7"/>
+        <img src="stamps/course/media_art.png" alt="MediaArt" data-stamp-id="8"/>
+        <img src="stamps/course/miku.png" alt="Miku" data-stamp-id="9"/>
+        <img src="stamps/course/minecraft.png" alt="Minecraft" data-stamp-id="10"/>
+        <img src="stamps/course/movie.png" alt="Movie" data-stamp-id="11"/>
+        <img src="stamps/course/unity.png" alt="Unity" data-stamp-id="12"/>
+        <img src="stamps/course/web_design.png" alt="WebDesign" data-stamp-id="13"/>
+        <img src="stamps/course/web_service.png" alt="WebService" data-stamp-id="14"/>
+      </div>
+
+      <div class="stamp-section" id="mentor">
+        <img src="stamps/mentor/marupi.png" alt="Marupi" data-stamp-id="15"/>
+      </div>
     </div>
 
-    <button id="loginButton" disabled>ログイン</button>
+    <!-- コルクボード関係のボタン群 -->
+    <div style="margin-bottom: 20px;">
+      <button id="saveButton">コルクボードを保存</button>
+      <button id="postButton">投稿する</button>
+    </div>
   </div>
 
-  <script src="scripts/login.js"></script>
+  <!-- ⑤ スクリプト：ここにすべてのJS処理を統合 -->
+  <script src="scripts/index.js"></script>
 </body>
 </html>

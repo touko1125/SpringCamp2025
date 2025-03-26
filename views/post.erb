@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Photo Album Challenge</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/dist/dom-to-image.min.js"></script>
+</head>
+<body>
+  <header class="header">
+    <img src="assets/header-logo.png" class="header-logo" alt="Photo Album Challenge" />
+  </header>
+
+  <!-- メインコンテンツ -->
+  <div class="camera-container">
+    <h1>瞬間を切り取れ！ ~Photo Album Challenge~</h1>
+    <p>お題に挑戦をして、チームのアルバムを作ろう！</p>
+
+    <!-- お題を選択するセレクトボックス -->
+    <div class="theme-select-container">
+      <label for="themeSelect">お題を選択：</label>
+      <select id="themeSelect">
+        <!-- valueをIDとみなし、テキストはお題の名前 -->
+        <option value="0">選択してください</option>
+        <option value="1">#お昼の瞬間</option>
+        <option value="2">#桜の瞬間</option>
+        <option value="3">#友達は宝★な瞬間</option>
+        <option value="4">#開発の瞬間</option>
+        <option value="5">#自撮りの瞬間</option>
+      </select>
+    </div>
+
+    <h2>写真を撮影しよう！</h2>
+
+    <!-- チェキ風フレーム -->
+    <div class="photo-preview" id="photoPreview">
+      <div class="photo-inner">
+        <!-- カメラ映像 -->
+        <video id="cameraVideo" autoplay playsinline></video>
+        <!-- 撮影後のプレビュー用画像。最初は非表示 -->
+        <img id="capturedImage" alt="captured still" />
+      </div>
+
+      <!-- 撮影日 & お題表示 -->
+      <div class="date-display" id="dateDisplay"></div>
+      <div class="theme-display" id="themeDisplay"></div>
+    </div>
+
+    <!-- ボタン類（初期状態: カメラ切り替え & 撮影ボタン） -->
+    <div class="btn-group">
+      <button id="switchButton">カメラ切り替え</button>
+      <button id="takePhotoButton">撮影</button>
+
+      <!-- 撮影後に表示させるボタン（最初は非表示） -->
+      <button id="postButton" style="display:none;">投稿</button>
+      <button id="retakeButton" style="display:none;">再撮影</button>
+    </div>
+  </div>
+
+  <!-- JS -->
+  <script src="scripts/post.js"></script>
+</body>
+</html>
