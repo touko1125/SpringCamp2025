@@ -137,11 +137,16 @@
       <label for="themeSelect">お題を選択：</label>
       <select id="themeSelect">
         <option value="0">選択してください</option>
-        <option value="1">#お昼の瞬間</option>
-        <option value="2">#桜の瞬間</option>
-        <option value="3">#友達は宝★な瞬間</option>
-        <option value="4">#開発の瞬間</option>
-        <option value="5">#自撮りの瞬間</option>
+        <option value="1">#開発の瞬間</option>
+        <option value="2">#お昼の瞬間</option>
+        <option value="3">#メンターの瞬間</option>
+        <option value="4">#だいばーの瞬間</option>
+        <option value="5">#コースの瞬間</option>
+        <option value="6">#おそろいの瞬間</option>
+        <option value="7">#テックな瞬間</option>
+        <option value="8">#自撮りの瞬間</option>
+        <option value="9">#春の瞬間</option>
+        <option value="10">#隣人との瞬間</option>
       </select>
     </div>
 
@@ -204,7 +209,7 @@
 
     // 「アルバム」ボタン（例：アルバム一覧ページへ移動）
     if (albumButton) {
-      albumButton.addEventListener("click", () => {
+        albumButton.addEventListener("click", () => {
         window.location.href = "/";
       });
     }
@@ -287,11 +292,11 @@
       const scale = 1.05;
       try {
         const dataUrl = await domtoimage.toPng(photoPreview, {
-          height: photoPreview.clientHeight * scale,
-          style: {
-            transform: "translateY(-40px)",
-            transformOrigin: "top left",
-          },
+          // height: photoPreview.clientHeight * scale,
+          // style: {
+          //   transform: "translateY(-40px)",
+          //   transformOrigin: "top left",
+          // },
         });
         finalBase64 = dataUrl;
         console.log("dom-to-image で撮影成功");

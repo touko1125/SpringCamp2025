@@ -13,23 +13,43 @@ Place.create!(
 
 # テーマ
 Theme.create!(
-    name: "#お昼の瞬間"
-)
-
-Theme.create!(
-    name: "#桜の瞬間"
-)
-
-Theme.create!(
-    name: "#友達は宝★な瞬間"
-)
-
-Theme.create!(
     name: "#開発の瞬間"
 )
 
 Theme.create!(
+    name: "#お昼の瞬間"
+)
+
+Theme.create!(
+    name: "#メンターの瞬間"
+)
+
+Theme.create!(
+    name: "#だいばーの瞬間"
+)
+
+Theme.create!(
+    name: "#コースの瞬間"
+)
+
+Theme.create!(
+    name: "#おそろいの瞬間"
+)
+
+Theme.create!(
+    name: "#テックな瞬間"
+)
+
+Theme.create!(
     name: "#自撮りの瞬間"
+)
+
+Theme.create!(
+    name: "#春の瞬間"
+)
+
+Theme.create!(
+    name: "#隣人との瞬間"
 )
 
 # ユーザー
