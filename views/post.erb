@@ -2,25 +2,140 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>Photo Album Challenge</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <title>PhotoAlbumChallenge</title>
+
+  <!-- 共通CSSファイル -->
+  <link rel="stylesheet" href="css/common.css">
+
+  <!-- dom-to-image CDN -->
   <script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/dist/dom-to-image.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru&family=Sawarabi+Gothic&display=swap" rel="stylesheet">
+  <link rel="shortcut icon" href="/assets/logo.png">
+
+  <style>
+    /* =========================
+       post.html 独自スタイル
+       ========================= */
+
+    /* カメラ・チェキ風プレビュー */
+    .camera-container {
+      width: 100%;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .camera-video {
+      width: 100%;
+      max-width: 400px;
+      background-color: #000;
+    }
+    .btn-group button {
+      margin-right: 0.5rem;
+      margin-top: 30px;
+    }
+
+    /* 外側の白い枠（チェキ風フレーム）：比率 54:86 */
+    .photo-preview {
+      position: relative;
+      width: 800px;
+      aspect-ratio: 54 / 86;   
+      background-color: #fff;
+      overflow: hidden;
+      border: 2px solid #ccc;
+      margin: 40px auto;
+      border-radius: 4px;
+    }
+    .photo-inner {
+      position: absolute;
+      width: 85.185%;
+      height: 72.093%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -61%);
+      overflow: hidden;
+    }
+    #cameraVideo, 
+    #capturedImage {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: absolute;
+      top: 0;
+      left: 0;
+      background-color: #000; 
+    }
+    .date-display,
+    .theme-display {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 14px;
+      color: #000;
+      background: rgba(255,255,255,0.8);
+      z-index: 2; 
+      pointer-events: none;
+    }
+    .theme-select-container {
+      height: 50px;
+    }
+    #themeSelect {
+      font-family: "Sawarabi Gothic", sans-serif;
+      font-size: 16px;
+      height: 100%;
+      padding: 0 10px;
+      width: 200px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .date-display {
+      bottom: 30px;
+      font-family: "Sawarabi Gothic", sans-serif;
+      font-weight: bold;
+      font-size: 30px;
+    }
+    .theme-display {
+      bottom: 120px;
+      font-size: 50px;
+    }
+  </style>
 </head>
 <body>
   <header class="header">
-    <img src="assets/header-logo.png" class="header-logo" alt="Photo Album Challenge" />
+    <img src="assets/logo.png" class="header-logo" alt="Photo Album Challenge" />
+    <div class="header-controls">
+      <!-- チーム選択 -->
+      <select id="mentorSelect">
+        <option value="">自分のチーム名を選択してね！</option>
+        <option value="ほのぴ">A：Abling-Abang-Abang-Aborn</option>
+        <option value="キノヤ">B：キノヤとキャットクルー</option>
+        <option value="あいりす">C：おでんかるぼなーら 〜 からしを添えて 〜</option>
+        <option value="だーす">D：電卓界隈</option>
+        <option value="ことり/ダイキチ">E：ジップザップビクトリー！！！</option>
+        <option value="さぁ坊">F：満開信号機</option>
+        <option value="しーぷ">G：別荘</option>
+        <option value="ゆわ">H：Hydrogens6</option>
+        <option value="ぎる">I：HARLIES</option>
+        <option value="ひとで">J：SHERLOCKs</option>
+        <option value="はーちぃ">K：大隈社月刊はーちぃ部アニメ製作所</option>
+        <option value="島ちゃん">L：Uniコーン</option>
+        <option value="らい">M：Mburger</option>
+        <option value="まなち">N：純恋愛のナトリウム</option>
+        <option value="さくこ/まるぴ">O：あぶらP</option>
+        <option value="かむり">P：おさんぽ</option>
+      </select>
+      <button id="cameraButton" disabled>お題に挑戦！</button>
+      <button id="albumButton">アルバム</button>
+    </div>
   </header>
 
   <!-- メインコンテンツ -->
   <div class="camera-container">
-    <h1>瞬間を切り取れ！ ~Photo Album Challenge~</h1>
-    <p>お題に挑戦をして、チームのアルバムを作ろう！</p>
-
     <!-- お題を選択するセレクトボックス -->
     <div class="theme-select-container">
       <label for="themeSelect">お題を選択：</label>
       <select id="themeSelect">
-        <!-- valueをIDとみなし、テキストはお題の名前 -->
         <option value="0">選択してください</option>
         <option value="1">#お昼の瞬間</option>
         <option value="2">#桜の瞬間</option>
@@ -30,7 +145,13 @@
       </select>
     </div>
 
-    <h2>写真を撮影しよう！</h2>
+    <!-- ボタン類 -->
+    <div class="btn-group">
+      <button id="switchButton">カメラ切り替え</button>
+      <button id="takePhotoButton">撮影</button>
+      <button id="postButton" style="display:none;">投稿</button>
+      <button id="retakeButton" style="display:none;">再撮影</button>
+    </div>
 
     <!-- チェキ風フレーム -->
     <div class="photo-preview" id="photoPreview">
@@ -45,19 +166,192 @@
       <div class="date-display" id="dateDisplay"></div>
       <div class="theme-display" id="themeDisplay"></div>
     </div>
-
-    <!-- ボタン類（初期状態: カメラ切り替え & 撮影ボタン） -->
-    <div class="btn-group">
-      <button id="switchButton">カメラ切り替え</button>
-      <button id="takePhotoButton">撮影</button>
-
-      <!-- 撮影後に表示させるボタン（最初は非表示） -->
-      <button id="postButton" style="display:none;">投稿</button>
-      <button id="retakeButton" style="display:none;">再撮影</button>
-    </div>
   </div>
 
-  <!-- JS -->
-  <script src="scripts/post.js"></script>
+  <!-- ======================
+       JavaScriptコード
+     ====================== -->
+  <script>
+    const shortCamp = "waseda"; // 固定
+    const mentorSelect = document.getElementById("mentorSelect");
+    const cameraButton = document.getElementById("cameraButton");
+    const albumButton = document.getElementById("albumButton");
+    const corkBoard = document.getElementById("corkBoard");
+
+    // ヘッダーに、既に選択済みのチームを表示
+    const savedTeam = localStorage.getItem("selectedMentor");
+    if (savedTeam) {
+      mentorSelect.value = savedTeam;
+      cameraButton.disabled = false;
+    }
+
+    // チーム選択変更時
+    mentorSelect.addEventListener("change", () => {
+      cameraButton.disabled = !mentorSelect.value;
+      if (mentorSelect.value) {
+        // 保存
+        localStorage.setItem("selectedMentor", mentorSelect.value);
+      } else {
+        corkBoard.innerHTML = "";
+      }
+    });
+
+    // 「お題に挑戦！」ボタン → 撮影ページへ移動
+    cameraButton.addEventListener("click", () => {
+      localStorage.setItem("selectedCamp", shortCamp);
+      window.location.href = "/post";
+    });
+
+    // 「アルバム」ボタン（例：アルバム一覧ページへ移動）
+    if (albumButton) {
+      albumButton.addEventListener("click", () => {
+        window.location.href = "/";
+      });
+    }
+
+
+    let facingMode = "user"; 
+    const cameraVideo = document.getElementById("cameraVideo");
+    const capturedImage = document.getElementById("capturedImage");
+    const switchButton = document.getElementById("switchButton");
+    const takePhotoButton = document.getElementById("takePhotoButton");
+    const postButton = document.getElementById("postButton");
+    const retakeButton = document.getElementById("retakeButton");
+    const dateDisplay = document.getElementById("dateDisplay");
+    const themeDisplay = document.getElementById("themeDisplay");
+    const themeSelect = document.getElementById("themeSelect");
+    const photoPreview = document.getElementById("photoPreview");
+
+    let finalBase64 = "";
+
+    function startCamera() {
+      navigator.mediaDevices.getUserMedia({ video: { facingMode }, audio: false })
+        .then(stream => {
+          cameraVideo.srcObject = stream;
+          cameraVideo.style.display = "block";
+          capturedImage.style.display = "none";
+        })
+        .catch(err => {
+          console.error("カメラ起動エラー:", err);
+          alert("カメラが利用できません");
+        });
+    }
+
+    function getFormattedDate() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}.${m}.${d}`;
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      dateDisplay.textContent = getFormattedDate();
+      themeDisplay.textContent = ""; 
+      startCamera();
+
+      postButton.style.display = "none";
+      retakeButton.style.display = "none";
+    });
+
+    themeSelect.addEventListener("change", () => {
+      const val = themeSelect.value;
+      const txt = themeSelect.options[themeSelect.selectedIndex].text;
+      themeDisplay.textContent = (val === "0") ? "" : txt;
+    });
+
+    switchButton.addEventListener("click", () => {
+      facingMode = (facingMode === "user") ? "environment" : "user";
+      if (cameraVideo.srcObject) {
+        cameraVideo.srcObject.getTracks().forEach(track => track.stop());
+      }
+      startCamera();
+    });
+
+    takePhotoButton.addEventListener("click", async () => {
+      if (themeSelect.value === "0") {
+        alert("お題を選択してください");
+        return;
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = cameraVideo.videoWidth;
+      canvas.height = cameraVideo.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(cameraVideo, 0, 0, canvas.width, canvas.height);
+
+      const videoSnapshotBase64 = canvas.toDataURL("image/png");
+      cameraVideo.style.display = "none";
+      capturedImage.src = videoSnapshotBase64;
+      capturedImage.style.display = "block";
+
+      const scale = 1.05;
+      try {
+        const dataUrl = await domtoimage.toPng(photoPreview, {
+          height: photoPreview.clientHeight * scale,
+          style: {
+            transform: "translateY(-40px)",
+            transformOrigin: "top left",
+          },
+        });
+        finalBase64 = dataUrl;
+        console.log("dom-to-image で撮影成功");
+      } catch (err) {
+        console.error("チェキDOMキャプチャエラー:", err);
+        alert("撮影に失敗しました");
+        return;
+      }
+
+      switchButton.style.display = "none";
+      takePhotoButton.style.display = "none";
+      postButton.style.display = "inline-block";
+      retakeButton.style.display = "inline-block";
+    });
+
+    retakeButton.addEventListener("click", () => {
+      if (cameraVideo.srcObject) {
+        cameraVideo.srcObject.getTracks().forEach(track => track.stop());
+      }
+      startCamera();
+
+      switchButton.style.display = "inline-block";
+      takePhotoButton.style.display = "inline-block";
+      postButton.style.display = "none";
+      retakeButton.style.display = "none";
+    });
+
+    postButton.addEventListener("click", () => {
+      const selectedCamp = localStorage.getItem("selectedCamp") || "waseda"; 
+      const selectedMentor = localStorage.getItem("selectedMentor") || "共通";
+      const themeId = parseInt(themeSelect.value, 10);
+      if (!themeId) {
+        alert("お題が選択されていません");
+        return;
+      }
+      const postData = {
+        place: selectedCamp,
+        name: selectedMentor,
+        theme: themeId,
+        img_link: finalBase64
+      };
+      fetch("https://springcamp2025.onrender.com/post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(postData)
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("投稿失敗");
+        return res.json();
+      })
+      .then(data => {
+        console.log("投稿結果:", data);
+        alert("投稿しました！");
+        window.location.href = "/";
+      })
+      .catch(err => {
+        console.error(err);
+        alert("投稿に失敗しました");
+      });
+    });
+  </script>
 </body>
 </html>

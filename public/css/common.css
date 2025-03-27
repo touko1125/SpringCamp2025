@@ -1,0 +1,73 @@
+/* shared.css */
+
+/* =========================
+   ベースのリセット
+   ========================= */
+   * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  body {
+    background-color: #f4f4f4;
+    text-align: center;
+    font-family: "Kiwi Maru", serif;
+    font-weight: 400;
+    font-style: normal;
+  }
+  
+  /* ヘッダー：背景・ロゴに加え、チーム選択とナビゲーションボタン */
+  .header {
+    width: 100%;
+    background-color: #efe6d4;
+    padding: 20px;
+    text-align: center;
+    position: relative;
+    color: #fff;
+  }
+  .header-logo {
+    max-width: 220px;
+    display: block;
+    margin: 0 auto;
+  }
+  /* ヘッダー内の操作エリア */
+  .header-controls {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .header-controls select,
+  .header-controls button {
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+  }
+  .current-team {
+    font-weight: bold;
+  }
+  
+  /* =========================
+     コンテナ、フォームなど
+     ========================= */
+  .container {
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .form-group {
+    margin-bottom: 1rem;
+  }
+  button {
+    cursor: pointer;
+    padding: 0.6rem 1rem;
+    background-color: #ff4081;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+  }
+  button:disabled {
+    background-color: #aaa;
+    cursor: not-allowed;
+  }
+  

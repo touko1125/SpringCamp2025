@@ -2,92 +2,674 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>Photo Album Challenge</title>
-  <link rel="stylesheet" href="css/style.css" />
-  <!-- dom-to-image でコルクボードを画像保存するためのCDN -->
+  <title>PhotoAlbumChallenge</title>
+
+  <!-- 共通CSSファイル -->
+  <link rel="stylesheet" href="css/common.css">
+
+  <!-- dom-to-image CDN -->
   <script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/dist/dom-to-image.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Yusei+Magic&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru&family=Sawarabi+Gothic&display=swap" rel="stylesheet">
+  <link rel="shortcut icon" href="/assets/logo.png">
+
+  <style>
+    /* =========================
+       index.html 独自スタイル
+       ========================= */
+
+    /* コルクボード */
+    .cork-board-container {
+      text-align: center;
+    }
+    .cork-board {
+      background: url('assets/cork.jpg');
+      width: 900px;
+      height: 900px;
+      margin: 1% auto;
+      border: 10px solid #562b0b;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      position: relative;
+      overflow: hidden;
+      touch-action: none; /* スマホでのドラッグやピンチ操作を有効化 */
+    }
+    /* チーム名表示エリア（コルクボード内中央上部） */
+    .team-name-display {
+      margin: 2% auto;
+      width: 80%;
+      font-size: 2rem;
+      font-weight: bold;
+      color: #fff;
+      background-color: #562b0b;
+      pointer-events: none;
+    }
+
+    /* ★カテゴリ（セクション）を折りたたみ可能にする */
+    .stamp-category {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+      width: 80%;
+      margin: 2% auto;
+    }
+    .toggle-header {
+      background-color: #ddd;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .toggle-header span.icon {
+      font-size: 1.2rem;
+      margin-left: 10px;
+    }
+    .stamp-section {
+      display: none; /* 初期は閉じた状態 */
+      padding: 10px;
+      background-color: #f9f9f9;
+      transition: all 0.3s;
+    }
+    .stamp-section img {
+      width: 80px;
+      cursor: pointer;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin: 4px;
+    }
+    .stamp-section img:hover {
+      border-color: #ff4081;
+    }
+
+    h3 {
+      margin: 1rem auto;
+    }
+
+    /* 操作説明 */
+    .instructions {
+      background-color: #fffbe0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 1rem 2rem;
+      margin: 1rem auto;
+      line-height: 1.6;
+      text-align: left;
+      width: 60%;
+    }
+
+    /* スマホ用回転/削除ボタン */
+    .mobile-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+
+    #course img {
+      width: 50px;
+    }
+
+    #mentor img {
+      width: 100px;
+    }
+  </style>
 </head>
 <body>
+  <!-- ヘッダー：ロゴ、チーム選択、ナビゲーション -->
   <header class="header">
-    <img src="assets/header-logo.png" class="header-logo" alt="Photo Album Challenge" />
+    <img src="assets/logo.png" class="header-logo" alt="Photo Album Challenge" />
+    <div class="header-controls">
+      <!-- チーム選択 -->
+      <select id="mentorSelect">
+        <option value="">自分のチーム名を選択してね！</option>
+        <option value="ほのぴ" data-label="Abling-Abang-Abang-Aborn">A：Abling-Abang-Abang-Aborn</option>
+        <option value="キノヤ" data-label="キノヤとキャットクルー">B：キノヤとキャットクルー</option>
+        <option value="あいりす" data-label="おでんかるぼなーら 〜 からしを添えて 〜">C：おでんかるぼなーら 〜 からしを添えて 〜</option>
+        <option value="だーす" data-label="電卓界隈">D：電卓界隈</option>
+        <option value="ことり/ダイキチ" data-label="ジップザップビクトリー！！！">E：ジップザップビクトリー！！！</option>
+        <option value="さぁ坊" data-label="満開信号機">F：満開信号機</option>
+        <option value="しーぷ" data-label="別荘<">G：別荘</option>
+        <option value="ゆわ" data-label="Hydrogens6">H：Hydrogens6</option>
+        <option value="ぎる" data-label="HARLIES">I：HARLIES</option>
+        <option value="ひとで" data-label="SHERLOCKs">J：SHERLOCKs</option>
+        <option value="はーちぃ" data-label="大隈社月刊はーちぃ部アニメ製作所">K：大隈社月刊はーちぃ部アニメ製作所</option>
+        <option value="島ちゃん" data-label="Uniコーン">L：Uniコーン</option>
+        <option value="らい" data-label="Mburger">M：Mburger</option>
+        <option value="まなち" data-label="純恋愛のナトリウム">N：純恋愛のナトリウム</option>
+        <option value="さくこ/まるぴ" data-label="あぶらP">O：あぶらP</option>
+        <option value="かむり" data-label="おさんぽ">P：おさんぽ</option>
+      </select>
+      <button id="cameraButton" disabled>お題に挑戦！</button>
+      <button id="albumButton">アルバム</button>
+      <!-- ヘッダー内に現在のチーム名表示 -->
+      <span id="currentTeam" class="current-team"></span>
+    </div>
   </header>
 
   <div class="container">
-    <h1>瞬間を切り取れ！ ~Photo Album Challenge~</h1>
-    <p>お題に挑戦をして、チームのアルバムを作ろう！</p>
-
-    <!-- ① メンター選択（早稲田大学固定） -->
-    <div class="form-group">
-      <select id="mentorSelect">
-        <option value="">自分のチームのメンターを選択してね！</option>
-        <!-- 早稲田大学用メンター例 -->
-        <option value="ほのぴ">ほのぴ</option>
-        <option value="キノヤ">キノヤ</option>
-        <option value="あいりす">あいりす</option>
-        <option value="だーす">だーす</option>
-        <option value="ことり/ダイキチ">ことり/ダイキチ</option>
-        <option value="さぁ坊">さぁ坊</option>
-        <option value="しーぷ">しーぷ</option>
-        <option value="ゆわ">ゆわ</option>
-        <option value="ぎる">ぎる</option>
-        <option value="ひとで">ひとで</option>
-        <option value="はーちぃ">はーちぃ</option>
-        <option value="島ちゃん">島ちゃん</option>
-        <option value="らい">らい</option>
-        <option value="まなち">まなち</option>
-        <option value="さくこ/まるぴ">さくこ/まるぴ</option>
-        <option value="かむり">かむり</option>
-      </select>
-    </div>
-
-    <!-- メンターを選ぶまでボタンは無効 -->
-    <button id="cameraButton" disabled>お題に挑戦！</button>
-
-    <!-- ④ コルクボードエリア（投稿画像＆スタンプをドラッグで移動・リサイズ） -->
-    <div class="cork-board-container" style="margin-bottom:20px;">
-      <!-- スマホでのドラッグやピンチ操作を有効にするため、タッチアクションを無効化 -->
-      <div class="cork-board" id="corkBoard" 
-           style="position:relative; width:800px; height:600px; touch-action:none; background:url('assets/cork.jpg');">
+    <!-- コルクボード -->
+    <div class="cork-board-container">
+      <div class="cork-board" id="corkBoard">
+        <!-- チーム名表示 -->
+        <div id="teamNameDisplay" class="team-name-display"></div>
       </div>
     </div>
 
-    <!-- ② スタンプ一覧（クリックでコルクボードに貼り付け） -->
-    <h3>スタンプ一覧</h3>
-    <div class="stamp-list" id="stampList" style="margin-bottom:20px;">
-      <!-- 一例として、stamps/course/ai_creative.png にはデータ属性 data-stamp-id="1" を付与 -->
-      <div class="stamp-section" id="course">
-        <img src="stamps/course/ai_creative.png" alt="AI" data-stamp-id="1"/>
-        <img src="stamps/course/android.png" alt="Android" data-stamp-id="2"/>
-        <img src="stamps/course/animation.png" alt="Animation" data-stamp-id="3"/>
-        <img src="stamps/course/camera.png" alt="Camera" data-stamp-id="4"/>
-        <img src="stamps/course/designer.png" alt="Designer" data-stamp-id="5"/>
-        <img src="stamps/course/digital_music.png" alt="DigitalMusic" data-stamp-id="6"/>
-        <img src="stamps/course/iphone.png" alt="iPhone" data-stamp-id="7"/>
-        <img src="stamps/course/media_art.png" alt="MediaArt" data-stamp-id="8"/>
-        <img src="stamps/course/miku.png" alt="Miku" data-stamp-id="9"/>
-        <img src="stamps/course/minecraft.png" alt="Minecraft" data-stamp-id="10"/>
-        <img src="stamps/course/movie.png" alt="Movie" data-stamp-id="11"/>
-        <img src="stamps/course/unity.png" alt="Unity" data-stamp-id="12"/>
-        <img src="stamps/course/web_design.png" alt="WebDesign" data-stamp-id="13"/>
-        <img src="stamps/course/web_service.png" alt="WebService" data-stamp-id="14"/>
-      </div>
+    <!-- スタンプ一覧 -->
+    <h3>スタンプ</h3>
+    <div class="instructions">
+      <p>【操作方法】</p>
+      <ul>
+        <li>スタンプをタップで選択（白い枠が表示されます）</li>
+        <li>ピンチで拡大縮小</li>
+        <li>ドラッグで移動可能</li>
+        <li>下部の「左回転」「右回転」「削除」ボタンで操作</li>
+      </ul>
+      <p>アルバムを編集したら必ずアップロードをしよう！</p>
+    </div>
 
-      <div class="stamp-section" id="mentor">
-        <img src="stamps/mentor/marupi.png" alt="Marupi" data-stamp-id="15"/>
+    <!-- スマホ用操作ボタン -->
+    <div class="mobile-controls">
+      <button id="rotateLeftBtn">左回転</button>
+      <button id="rotateRightBtn">右回転</button>
+      <button id="deleteBtn">削除</button>
+    </div>
+
+    <!-- スタンプ一覧（カテゴリ別） -->
+    <div class="stamp-list" id="stampList">
+      <div class="stamp-category">
+        <div class="toggle-header">
+          コースキャラ <span class="icon">＋</span>
+        </div>
+        <div class="stamp-section" id="course">
+          <img src="stamps/course/ai_creative.png" alt="AI" data-stamp-id="1"/>
+          <img src="stamps/course/android.png" alt="Android" data-stamp-id="2"/>
+          <img src="stamps/course/animation.png" alt="Animation" data-stamp-id="3"/>
+          <img src="stamps/course/camera.png" alt="Camera" data-stamp-id="4"/>
+          <img src="stamps/course/designer.png" alt="Designer" data-stamp-id="5"/>
+          <img src="stamps/course/digital_music.png" alt="DigitalMusic" data-stamp-id="6"/>
+          <img src="stamps/course/iphone.png" alt="iPhone" data-stamp-id="7"/>
+          <img src="stamps/course/media_art.png" alt="MediaArt" data-stamp-id="8"/>
+          <img src="stamps/course/miku.png" alt="Miku" data-stamp-id="9"/>
+          <img src="stamps/course/minecraft.png" alt="Minecraft" data-stamp-id="10"/>
+          <img src="stamps/course/movie.png" alt="Movie" data-stamp-id="11"/>
+          <img src="stamps/course/unity.png" alt="Unity" data-stamp-id="12"/>
+          <img src="stamps/course/web_design.png" alt="WebDesign" data-stamp-id="13"/>
+          <img src="stamps/course/web_service.png" alt="WebService" data-stamp-id="14"/>
+        </div>
+      </div>
+      <div class="stamp-category">
+        <div class="toggle-header">
+          メンター <span class="icon">＋</span>
+        </div>
+        <div class="stamp-section" id="mentor">
+          <img src="stamps/mentor/honopi.png" alt="Honopi" data-stamp-id="15"/>
+          <img src="stamps/mentor/kinoya.png" alt="Kinoya" data-stamp-id="16"/>
+          <img src="stamps/mentor/airisu.png" alt="Airisu" data-stamp-id="17"/>
+          <img src="stamps/mentor/dars.png" alt="Dars" data-stamp-id="18"/>
+          <img src="stamps/mentor/kotori.png" alt="Kotori" data-stamp-id="19"/>
+          <img src="stamps/mentor/daikichi.png" alt="Daikichi" data-stamp-id="20"/>
+          <img src="stamps/mentor/sabo.png" alt="Sabo" data-stamp-id="21"/>
+          <img src="stamps/mentor/sheep.png" alt="Sheep" data-stamp-id="22"/>
+          <img src="stamps/mentor/yuwa.png" alt="Yuwa" data-stamp-id="23"/>
+          <img src="stamps/mentor/gil.png" alt="Gil" data-stamp-id="24"/>
+          <img src="stamps/mentor/hitode.png" alt="Hitode" data-stamp-id="25"/>
+          <img src="stamps/mentor/haachi.png" alt="Haachi" data-stamp-id="26"/>
+          <img src="stamps/mentor/shimachan.png" alt="Shimachan" data-stamp-id="27"/>
+          <img src="stamps/mentor/rai.png" alt="Rai" data-stamp-id="28"/>
+          <img src="stamps/mentor/manachi.png" alt="Manachi" data-stamp-id="29"/>
+          <img src="stamps/mentor/sakuko.png" alt="Sakuko" data-stamp-id="30"/>
+          <img src="stamps/mentor/marupi.png" alt="Marupi" data-stamp-id="31"/>
+          <img src="stamps/mentor/kamuri.png" alt="Kamuri" data-stamp-id="32"/>
+          <img src="stamps/mentor/baymax.png" alt="Baymax" data-stamp-id="33"/>
+        </div>
       </div>
     </div>
 
-    <!-- コルクボード関係のボタン群 -->
+    <!-- ボタン群 -->
     <div style="margin-bottom: 20px;">
-      <button id="saveButton">コルクボードを保存</button>
-      <button id="postButton">投稿する</button>
+      <button id="saveButton">画像を保存</button>
+      <button id="postButton">アップロード</button>
     </div>
   </div>
 
-  <!-- ⑤ スクリプト：ここにすべてのJS処理を統合 -->
-  <script src="scripts/index.js"></script>
+  <!-- JS: index.html 用の処理 -->
+  <script>
+    'use strict';
+
+    // ----- 0) トグル開閉の処理（＋／▼アイコン切り替え付き） -----
+    window.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll(".toggle-header").forEach(header => {
+        header.addEventListener("click", () => {
+          const nextSection = header.nextElementSibling;
+          const icon = header.querySelector(".icon");
+          if (!nextSection) return;
+          if (nextSection.style.display === "none" || nextSection.style.display === "") {
+            nextSection.style.display = "block";
+            if (icon) icon.textContent = "▼";
+          } else {
+            nextSection.style.display = "none";
+            if (icon) icon.textContent = "＋";
+          }
+        });
+      });
+    });
+
+    // 選択中の画像（スタンプ）
+    let selectedImg = null;
+
+    // ----- 1) ヘッダーのチーム選択とナビゲーションボタン -----
+    window.addEventListener("DOMContentLoaded", () => {
+      const shortCamp = "waseda"; // 固定
+      const mentorSelect = document.getElementById("mentorSelect");
+      const cameraButton = document.getElementById("cameraButton");
+      const albumButton = document.getElementById("albumButton");
+      const corkBoard = document.getElementById("corkBoard");
+      const teamNameDisplay = document.getElementById("teamNameDisplay");
+
+      // ヘッダーに既に選択済みのチームがある場合
+      const savedTeam = localStorage.getItem("selectedMentor");
+      if (savedTeam) {
+        mentorSelect.value = savedTeam;
+        cameraButton.disabled = false;
+        const selectedOption = mentorSelect.options[mentorSelect.selectedIndex];
+        teamNameDisplay.textContent = selectedOption.dataset.label;
+        fetchLayoutFromServer(savedTeam, corkBoard);
+      }
+
+      mentorSelect.addEventListener("change", () => {
+        cameraButton.disabled = !mentorSelect.value;
+        if (mentorSelect.value) {
+          const selectedOption = mentorSelect.options[mentorSelect.selectedIndex];
+          teamNameDisplay.textContent = selectedOption.dataset.label;
+          localStorage.setItem("selectedMentor", mentorSelect.value);
+          fetchLayoutFromServer(mentorSelect.value, corkBoard);
+        } else {
+          teamNameDisplay.textContent = "";
+          corkBoard.innerHTML = "";
+        }
+      });
+
+      // 「お題に挑戦！」ボタン → 撮影ページへ移動
+      cameraButton.addEventListener("click", () => {
+        localStorage.setItem("selectedCamp", shortCamp);
+        window.location.href = "/post";
+      });
+
+      // 「アルバム」ボタン → アルバム一覧ページへ移動
+      if (albumButton) {
+        albumButton.addEventListener("click", () => {
+          window.location.href = "/";
+        });
+      }
+    });
+
+    // ----- 2) コルクボード＆スタンプ機能 -----
+    const stampMapping = {
+      1: "stamps/course/ai_creative.png",
+      2: "stamps/course/android.png",
+      3: "stamps/course/animation.png",
+      4: "stamps/course/camera.png",
+      5: "stamps/course/designer.png",
+      6: "stamps/course/digital_music.png",
+      7: "stamps/course/iphone.png",
+      8: "stamps/course/media_art.png",
+      9: "stamps/course/miku.png",
+      10: "stamps/course/minecraft.png",
+      11: "stamps/course/movie.png",
+      12: "stamps/course/unity.png",
+      13: "stamps/course/web_design.png",
+      14: "stamps/course/web_service.png",
+      15: "stamps/mentor/honopi.png",
+      16: "stamps/mentor/kinoya.png",
+      17: "stamps/mentor/airisu.png",
+      18: "stamps/mentor/dars.png",
+      19: "stamps/mentor/kotori.png",
+      20: "stamps/mentor/daikichi.png",
+      21: "stamps/mentor/sabo.png",
+      22: "stamps/mentor/sheep.png",
+      23: "stamps/mentor/yuwa.png",
+      24: "stamps/mentor/gil.png",
+      25: "stamps/mentor/hitode.png",
+      26: "stamps/mentor/haachi.png",
+      27: "stamps/mentor/shimachan.png",
+      28: "stamps/mentor/rai.png",
+      29: "stamps/mentor/manachi.png",
+      30: "stamps/mentor/sakuko.png",
+      31: "stamps/mentor/marupi.png",
+      32: "stamps/mentor/kamuri.png",
+      33: "stamps/mentor/baymax.png"
+    };
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const corkBoard = document.getElementById("corkBoard");
+      const saveButton = document.getElementById("saveButton");
+      const postButton = document.getElementById("postButton");
+      const stampList = document.getElementById("stampList");
+
+      // スマホ用操作ボタン
+      const rotateLeftBtn = document.getElementById("rotateLeftBtn");
+      const rotateRightBtn = document.getElementById("rotateRightBtn");
+      const deleteBtn = document.getElementById("deleteBtn");
+
+      rotateLeftBtn.disabled = true;
+      rotateRightBtn.disabled = true;
+      deleteBtn.disabled = true;
+
+      if (stampList) {
+        stampList.querySelectorAll("img").forEach((stampImg) => {
+          stampImg.addEventListener("click", () => {
+            const stampId = parseInt(stampImg.getAttribute("data-stamp-id") || "0", 10);
+            addStampToBoard(stampImg.src, stampId, corkBoard);
+          });
+        });
+      }
+
+      if (saveButton) {
+        saveButton.addEventListener("click", () => {
+          ensureImagesLoaded(corkBoard).then(() => {
+            domtoimage.toPng(corkBoard)
+              .then((dataUrl) => {
+                const link = document.createElement("a");
+                link.download = 'board-image.png';
+                link.href = dataUrl;
+                link.click();
+              })
+              .catch((error) => {
+                console.error('dom-to-image エラー:', error);
+              });
+          });
+        });
+      }
+
+      if (postButton) {
+        postButton.addEventListener("click", () => {
+          ensureImagesLoaded(corkBoard).then(() => {
+            return domtoimage.toPng(corkBoard);
+          })
+          .then(() => {
+            const layoutData = collectLayoutData(corkBoard);
+            const selectedCamp = localStorage.getItem("selectedCamp") || "waseda";
+            const selectedMentor = localStorage.getItem("selectedMentor") || "共通";
+            return fetch("https://springcamp2025.onrender.com/post/albumn", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                name: selectedMentor,
+                place: selectedCamp,
+                layout: layoutData
+              })
+            });
+          })
+          .then((response) => {
+            if (response.ok) {
+              alert("投稿しました！");
+              window.location.href = "/";
+            } else {
+              alert("投稿に失敗しました");
+            }
+          })
+          .catch((error) => {
+            console.error('投稿エラー:', error);
+            alert("通信エラーが発生しました");
+          });
+        });
+      }
+
+      // スマホ向けボタンのイベント
+      rotateLeftBtn.addEventListener("click", () => {
+        if (!selectedImg) return;
+        let angle = parseFloat(selectedImg.dataset.angle) || 0;
+        angle -= 15;
+        selectedImg.dataset.angle = angle;
+        selectedImg.style.transform = `rotate(${angle}deg)`;
+      });
+      rotateRightBtn.addEventListener("click", () => {
+        if (!selectedImg) return;
+        let angle = parseFloat(selectedImg.dataset.angle) || 0;
+        angle += 15;
+        selectedImg.dataset.angle = angle;
+        selectedImg.style.transform = `rotate(${angle}deg)`;
+      });
+      deleteBtn.addEventListener("click", () => {
+        if (!selectedImg) return;
+        if (confirm("このスタンプを削除しますか？")) {
+          corkBoard.removeChild(selectedImg);
+          selectedImg = null;
+          rotateLeftBtn.disabled = true;
+          rotateRightBtn.disabled = true;
+          deleteBtn.disabled = true;
+        }
+      });
+
+      if (corkBoard) {
+        corkBoard.addEventListener("mousedown", (e) => {
+          if (e.target === corkBoard && selectedImg) {
+            selectedImg.style.outline = "none";
+            selectedImg = null;
+            rotateLeftBtn.disabled = true;
+            rotateRightBtn.disabled = true;
+            deleteBtn.disabled = true;
+          }
+        });
+        corkBoard.addEventListener("touchstart", (e) => {
+          if (e.target === corkBoard && e.touches.length === 1 && selectedImg) {
+            selectedImg.style.outline = "none";
+            selectedImg = null;
+            rotateLeftBtn.disabled = true;
+            rotateRightBtn.disabled = true;
+            deleteBtn.disabled = true;
+          }
+        }, { passive: false });
+      }
+    });
+
+    // ----- 3) サーバからレイアウト取得と配置 -----
+    function fetchLayoutFromServer(mentorName, corkBoard) {
+      if (!mentorName || !corkBoard) return;
+      const url = `https://springcamp2025.onrender.com/album/${encodeURIComponent(mentorName)}`;
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          if (data.layout && Array.isArray(data.layout)) {
+            renderLayoutToBoard(data.layout, corkBoard);
+          } else {
+            corkBoard.innerHTML = "";
+          }
+        })
+        .catch(err => {
+          console.error("レイアウト取得エラー:", err);
+          corkBoard.innerHTML = "";
+        });
+    }
+
+    function renderLayoutToBoard(layoutArray, corkBoard) {
+      corkBoard.innerHTML = "";
+      // まず、チーム名表示要素を再作成
+      const teamNameDisplay = document.createElement("div");
+      teamNameDisplay.id = "teamNameDisplay";
+      teamNameDisplay.className = "team-name-display";
+      const selectedOption = mentorSelect.options[mentorSelect.selectedIndex];
+      teamNameDisplay.textContent = selectedOption.dataset.label;
+      corkBoard.appendChild(teamNameDisplay);
+
+      layoutArray.forEach(item => {
+        if (item.type === "photo" || item.type === "stamp") {
+          const imgEl = document.createElement("img");
+          imgEl.src = item.img_link || stampMapping[item.id] || "";
+          imgEl.alt = `${item.type}-${item.id}`;
+          imgEl.draggable = false;
+          imgEl.style.position = "absolute";
+          imgEl.style.left = (item.x || 20) + "px";
+          imgEl.style.top = (item.y || 20) + "px";
+          imgEl.style.width = (item.width || 100) + "px";
+          imgEl.style.touchAction = "none";
+          imgEl.dataset.type = item.type;
+          imgEl.dataset.id = item.id;
+          imgEl.dataset.layoutId = item.layout_id;
+          if (typeof item.angle === "number") {
+            imgEl.dataset.angle = item.angle;
+            imgEl.style.transform = `rotate(${item.angle}deg)`;
+          } else {
+            imgEl.dataset.angle = 0;
+          }
+          makeDraggable(imgEl, corkBoard);
+          corkBoard.appendChild(imgEl);
+        }
+      });
+    }
+
+    function collectLayoutData(corkBoard) {
+      const items = corkBoard.querySelectorAll("img");
+      const layout = [];
+      items.forEach(img => {
+        const layout_id = parseInt(img.dataset.layoutId, 10) || 0;
+        const type = img.dataset.type;
+        const id = parseInt(img.dataset.id, 10) || 0;
+        const x = parseInt(img.style.left, 10) || 0;
+        const y = parseInt(img.style.top, 10) || 0;
+        const width = parseInt(img.style.width, 10) || 100;
+        const angle = parseFloat(img.dataset.angle) || 0;
+        layout.push({ layout_id, type, id, x, y, width, angle });
+      });
+      return layout;
+    }
+
+    function addStampToBoard(stampSrc, stampId, corkBoard) {
+      const stamp = document.createElement("img");
+      stamp.src = stampSrc;
+      stamp.draggable = false;
+      stamp.style.position = "absolute";
+      stamp.style.left = "20px";
+      stamp.style.top = "20px";
+      stamp.style.width = "100px";
+      stamp.style.touchAction = "none";
+      stamp.dataset.type = "stamp";
+      stamp.dataset.id = stampId;
+      stamp.dataset.angle = 0;
+      makeDraggable(stamp, corkBoard);
+      corkBoard.appendChild(stamp);
+    }
+
+    function makeDraggable(targetImg, parent) {
+      let isDragging = false;
+      let offsetX = 0;
+      let offsetY = 0;
+      let startDistance = 0;
+      let initialWidth = 0;
+
+      targetImg.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        if (selectedImg && selectedImg !== targetImg) {
+          selectedImg.style.outline = "none";
+        }
+        selectedImg = targetImg;
+        selectedImg.style.outline = "3px solid white";
+        isDragging = true;
+        offsetX = e.offsetX;
+        offsetY = e.offsetY;
+        document.getElementById("rotateLeftBtn").disabled = false;
+        document.getElementById("rotateRightBtn").disabled = false;
+        document.getElementById("deleteBtn").disabled = false;
+      });
+
+      parent.addEventListener("mousemove", (e) => {
+        if (!isDragging) return;
+        const rect = parent.getBoundingClientRect();
+        const x = e.clientX - rect.left - offsetX;
+        const y = e.clientY - rect.top - offsetY;
+        targetImg.style.left = x + "px";
+        targetImg.style.top = y + "px";
+      });
+      parent.addEventListener("mouseup", () => { isDragging = false; });
+      parent.addEventListener("mouseleave", () => { isDragging = false; });
+
+      targetImg.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        if (e.shiftKey) {
+          let angle = parseFloat(targetImg.dataset.angle) || 0;
+          angle += (e.deltaY > 0 ? 5 : -5);
+          targetImg.dataset.angle = angle;
+          targetImg.style.transform = `rotate(${angle}deg)`;
+        } else {
+          const currentWidth = targetImg.offsetWidth;
+          let newWidth = currentWidth - (e.deltaY > 0 ? 5 : -5);
+          if (newWidth < 20) newWidth = 20;
+          targetImg.style.width = newWidth + "px";
+        }
+      });
+
+      targetImg.addEventListener("click", (e) => {
+        if (e.shiftKey) {
+          if (confirm("このスタンプを削除しますか？")) {
+            parent.removeChild(targetImg);
+            selectedImg = null;
+            document.getElementById("rotateLeftBtn").disabled = true;
+            document.getElementById("rotateRightBtn").disabled = true;
+            document.getElementById("deleteBtn").disabled = true;
+          }
+        }
+      });
+
+      targetImg.addEventListener("touchstart", (e) => {
+        if (e.touches.length === 1) {
+          if (selectedImg && selectedImg !== targetImg) {
+            selectedImg.style.outline = "none";
+          }
+          selectedImg = targetImg;
+          selectedImg.style.outline = "3px solid white";
+          document.getElementById("rotateLeftBtn").disabled = false;
+          document.getElementById("rotateRightBtn").disabled = false;
+          document.getElementById("deleteBtn").disabled = false;
+          const rect = targetImg.getBoundingClientRect();
+          offsetX = e.touches[0].clientX - rect.left;
+          offsetY = e.touches[0].clientY - rect.top;
+        } else if (e.touches.length === 2) {
+          startDistance = getTouchDistance(e.touches[0], e.touches[1]);
+          initialWidth = targetImg.offsetWidth;
+        }
+      }, { passive: false });
+
+      parent.addEventListener("touchmove", (e) => {
+        if (e.touches.length === 1 && selectedImg === targetImg) {
+          const rect = parent.getBoundingClientRect();
+          const x = e.touches[0].clientX - rect.left - offsetX;
+          const y = e.touches[0].clientY - rect.top - offsetY;
+          targetImg.style.left = x + "px";
+          targetImg.style.top = y + "px";
+        } else if (e.touches.length === 2 && selectedImg === targetImg) {
+          const newDistance = getTouchDistance(e.touches[0], e.touches[1]);
+          const scale = newDistance / startDistance;
+          let newWidth = initialWidth * scale;
+          if (newWidth < 20) newWidth = 20;
+          targetImg.style.width = newWidth + "px";
+        }
+      }, { passive: false });
+
+      parent.addEventListener("touchend", () => {}, { passive: false });
+    }
+
+    function getTouchDistance(touch1, touch2) {
+      const dx = touch1.clientX - touch2.clientX;
+      const dy = touch1.clientY - touch2.clientY;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    function ensureImagesLoaded(container) {
+      const imgs = container.querySelectorAll("img");
+      const promises = Array.from(imgs).map(img => {
+        if (img.complete) return Promise.resolve();
+        return new Promise(resolve => {
+          img.onload = resolve;
+          img.onerror = resolve;
+        });
+      });
+      return Promise.all(promises);
+    }
+  </script>
 </body>
 </html>
