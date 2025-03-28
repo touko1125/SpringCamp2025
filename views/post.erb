@@ -298,6 +298,8 @@
             transformOrigin: "top left",
           },
         });
+        console.log("photoPreview:", photoPreview);
+        console.log("dataUrl:", dataUrl);
         finalBase64 = dataUrl;
         console.log("dom-to-image で撮影成功");
       } catch (err) {
