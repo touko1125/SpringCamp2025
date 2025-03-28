@@ -43,7 +43,7 @@
       padding: 40px 0;
       display: flex;
       justify-content: center;
-      
+
     }
 
     /* 外側の白い枠（チェキ風フレーム）：比率 54:86 */
@@ -386,13 +386,24 @@
     // --- ダウンロードボタン: photoPreview 全体を base64 に変換してダウンロード ---
     downloadButton.addEventListener("click", async () => {
       try {
-        const dataUrl = await domtoimage.toJpeg(photoPreview, {
+        domtoimage.toPng(photoPreview, {
           crossOrigin: 'anonymous',
-        });
-        const a = document.createElement("a");
-        a.href = dataUrl;
-        a.download = "captured.png";
-        a.click();
+        })
+            .then((dataUrl) => {
+              domtoimage.toPng(photoPreview)
+              .then((dataUrl1) => {
+                  const a = document.createElement("a");
+                  a.href = dataUrl;
+                  a.download = "captured.png";
+                  a.click();
+              })
+              .catch((error) => {
+                  console.error('oops, something went wrong!', error);
+              });
+            })
+            .catch((error) => {
+                console.error('oops, something went wrong!', error);
+            });
       } catch (err) {
         console.error("ダウンロードエラー:", err);
         alert("ダウンロードに失敗しました");
@@ -425,10 +436,6 @@
       try {
         const dataUrl = await domtoimage.toJpeg(photoPreview, {
           crossOrigin: 'anonymous',
-          style: {
-            //transform: "translateX(-60px)",
-            transformOrigin: "top left",
-          },
         });
         finalBase64 = dataUrl;
         console.log("dom-to-image で変換成功:", finalBase64);
