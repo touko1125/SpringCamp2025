@@ -291,12 +291,13 @@
 
       const scale = 1.05;
       try {
+        await ensureImagesLoaded(photoPreview);
         const dataUrl = await domtoimage.toPng(photoPreview, {
           // height: photoPreview.clientHeight * scale,
-          // style: {
-          //   transform: "translateY(-40px)",
-          //   transformOrigin: "top left",
-          // },
+          style: {
+            transform: "translateX(-40px)",
+            transformOrigin: "top left",
+          },
         });
         finalBase64 = dataUrl;
         console.log("dom-to-image で撮影成功");
@@ -311,6 +312,18 @@
       postButton.style.display = "inline-block";
       retakeButton.style.display = "inline-block";
     });
+
+    function ensureImagesLoaded(container) {
+      const imgs = container.querySelectorAll("img");
+      const promises = Array.from(imgs).map(img => {
+        if (img.complete) return Promise.resolve();
+        return new Promise(resolve => {
+          img.onload = resolve;
+          img.onerror = resolve;
+        });
+      });
+      return Promise.all(promises);
+    }
 
     retakeButton.addEventListener("click", () => {
       if (cameraVideo.srcObject) {
