@@ -272,7 +272,7 @@
       const teamNameDisplay = document.getElementById("teamNameDisplay");
 
       // ヘッダーに既に選択済みのチームがある場合
-      const savedTeam = localStorage.getItem("selectedMentor");
+      var savedTeam = localStorage.getItem("selectedMentor");
       if (savedTeam) {
         if(savedTeam === "ことり/ダイキチ") {
           savedTeam = "ことりダイキチ";
