@@ -291,14 +291,14 @@
 
       const scale = 1.05;
       try {
-        const dataUrl = await domtoimage.toPng(photoPreview, {
+        const dataUrl = await domtoimage.toPng(document.getElementById("photoPreview"), {
           // height: photoPreview.clientHeight * scale,
           style: {
             transform: "translateX(-50px)",
             transformOrigin: "top left",
           },
         });
-        console.log("photoPreview:", photoPreview);
+        console.log("photoPreview:", document.getElementById("photoPreview"));
         console.log("dataUrl:", dataUrl);
         finalBase64 = dataUrl;
         console.log("dom-to-image で撮影成功");
