@@ -177,7 +177,7 @@
        JavaScriptコード
      ====================== -->
   <script>
-    const shortCamp = "waseda"; // 固定
+    const shortCamp = "waseda"; 
     const mentorSelect = document.getElementById("mentorSelect");
     const cameraButton = document.getElementById("cameraButton");
     const albumButton = document.getElementById("albumButton");
@@ -190,32 +190,30 @@
       cameraButton.disabled = false;
     }
 
-    // チーム選択変更時
     mentorSelect.addEventListener("change", () => {
       cameraButton.disabled = !mentorSelect.value;
       if (mentorSelect.value) {
-        // 保存
         localStorage.setItem("selectedMentor", mentorSelect.value);
       } else {
         // corkBoard がある前提のコード
-        corkBoard.innerHTML = "";
+        if (corkBoard) {
+          corkBoard.innerHTML = "";
+        }
       }
     });
 
-    // 「お題に挑戦！」ボタン → 撮影ページへ移動
     cameraButton.addEventListener("click", () => {
       localStorage.setItem("selectedCamp", shortCamp);
       window.location.href = "/post";
     });
 
-    // 「アルバム」ボタン（例：アルバム一覧ページへ移動）
     if (albumButton) {
-        albumButton.addEventListener("click", () => {
+      albumButton.addEventListener("click", () => {
         window.location.href = "/";
       });
     }
 
-    let facingMode = "user"; 
+    let facingMode = "user";
     const cameraVideo = document.getElementById("cameraVideo");
     const capturedImage = document.getElementById("capturedImage");
     const switchButton = document.getElementById("switchButton");
@@ -227,6 +225,7 @@
     const themeSelect = document.getElementById("themeSelect");
     const photoPreview = document.getElementById("photoPreview");
 
+    // 最終的に投稿する画像（photoPreview 全体の base64）
     let finalBase64 = "";
 
     function startCamera() {
@@ -250,10 +249,9 @@
       return `${y}.${m}.${d}`;
     }
 
-    // DOMContentLoaded イベント
     window.addEventListener("DOMContentLoaded", () => {
       dateDisplay.textContent = getFormattedDate();
-      themeDisplay.textContent = ""; 
+      themeDisplay.textContent = "";
       startCamera();
 
       postButton.style.display = "none";
@@ -292,14 +290,14 @@
       return Promise.race([Promise.all(promises), timeoutPromise]);
     }
 
-    // 「撮影」ボタン
-    takePhotoButton.addEventListener("click", async () => {
+    // 「撮影」ボタン: ビデオのみをキャプチャしてプレビューに表示
+    takePhotoButton.addEventListener("click", () => {
       if (themeSelect.value === "0") {
         alert("お題を選択してください");
         return;
       }
 
-      // カメラ映像をcanvasに描画してbase64化
+      // カメラ映像をcanvasに描画し、dataURLを取得
       const canvas = document.createElement("canvas");
       canvas.width = cameraVideo.videoWidth;
       canvas.height = cameraVideo.videoHeight;
@@ -307,47 +305,19 @@
       ctx.drawImage(cameraVideo, 0, 0, canvas.width, canvas.height);
 
       // 取得した画像を表示
-      const videoSnapshotBase64 = canvas.toDataURL("image/png");
+      const dataUrl = canvas.toDataURL("image/png");
       cameraVideo.style.display = "none";
-      capturedImage.src = videoSnapshotBase64;
       capturedImage.style.display = "block";
+      capturedImage.src = dataUrl;
 
-      // 画像の読み込みが完了するのを待機（タイムアウト3秒）
-      try {
-        await ensureImagesLoaded(photoPreview);
-      } catch (err) {
-        console.error("画像の読み込み中にエラー:", err);
-        alert("画像の読み込みに失敗しました");
-        return;
-      }
-
-      // 画像が読み込まれてから dom-to-image でキャプチャ
-      try {
-        const dataUrl = await domtoimage.toPng(photoPreview, {
-          crossOrigin: 'anonymous',
-          style: {
-            transform: "translateX(-60px)",
-            transformOrigin: "top left",
-          },
-        });
-        console.log("photoPreview:", photoPreview);
-        console.log("dataUrl:", dataUrl);
-        finalBase64 = dataUrl;
-        console.log("dom-to-image で撮影成功");
-      } catch (err) {
-        console.error("チェキDOMキャプチャエラー:", err);
-        alert("撮影に失敗しました");
-        return;
-      }
-
-      // ボタンの表示切り替え
+      // ボタン切り替え
       switchButton.style.display = "none";
       takePhotoButton.style.display = "none";
       postButton.style.display = "inline-block";
       retakeButton.style.display = "inline-block";
     });
 
-    // 「再撮影」ボタン
+    // 「再撮影」ボタン: カメラを再起動
     retakeButton.addEventListener("click", () => {
       if (cameraVideo.srcObject) {
         cameraVideo.srcObject.getTracks().forEach(track => track.stop());
@@ -358,24 +328,53 @@
       takePhotoButton.style.display = "inline-block";
       postButton.style.display = "none";
       retakeButton.style.display = "none";
+      finalBase64 = "";
     });
 
-    // 「投稿」ボタン
-    postButton.addEventListener("click", () => {
-      const selectedCamp = localStorage.getItem("selectedCamp") || "waseda"; 
+    // 「投稿」ボタン: photoPreview 全体を dom-to-image でキャプチャ → base64 → サーバに送信
+    postButton.addEventListener("click", async () => {
+      const selectedCamp = localStorage.getItem("selectedCamp") || "waseda";
       const selectedMentor = localStorage.getItem("selectedMentor") || "共通";
       const themeId = parseInt(themeSelect.value, 10);
       if (!themeId) {
         alert("お題が選択されていません");
         return;
       }
-      console.log("投稿データ:", selectedCamp, selectedMentor, themeId, finalBase64);
+
+      // 画像が読み込まれているかを確認
+      try {
+        await ensureImagesLoaded(photoPreview);
+      } catch (err) {
+        console.error("画像の読み込みエラー:", err);
+        alert("画像の読み込みに失敗しました");
+        return;
+      }
+
+      // photoPreview 全体を base64 (dataURL) に変換
+      try {
+        const dataUrl = await domtoimage.toPng(photoPreview, {
+          crossOrigin: 'anonymous',
+          style: {
+            transform: "translateX(-60px)",
+            transformOrigin: "top left",
+          },
+        });
+        finalBase64 = dataUrl;
+        console.log("dom-to-image で変換成功:", finalBase64);
+      } catch (err) {
+        console.error("dom-to-image エラー:", err);
+        alert("投稿用画像の作成に失敗しました");
+        return;
+      }
+
+      // サーバーにJSON形式で送信
       const postData = {
         place: selectedCamp,
         name: selectedMentor,
         theme: themeId,
         img_link: finalBase64
       };
+
       fetch("https://springcamp2025.onrender.com/post", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
