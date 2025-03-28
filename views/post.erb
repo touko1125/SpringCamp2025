@@ -34,6 +34,10 @@
       margin-right: 0.5rem;
       margin-top: 30px;
     }
+    /* 隠しのファイル入力 */
+    #uploadInput {
+      display: none;
+    }
 
     /* 外側の白い枠（チェキ風フレーム）：比率 54:86 */
     .photo-preview {
@@ -154,8 +158,12 @@
     <div class="btn-group">
       <button id="switchButton">カメラ切り替え</button>
       <button id="takePhotoButton">撮影</button>
+      <button id="uploadButton">アップロード</button>
+      <button id="downloadButton" style="display:none;">ダウンロード</button>
       <button id="postButton" style="display:none;">投稿</button>
       <button id="retakeButton" style="display:none;">再撮影</button>
+      <!-- 隠しファイル入力 -->
+      <input type="file" id="uploadInput" accept="image/*">
     </div>
 
     <!-- チェキ風フレーム -->
@@ -183,7 +191,7 @@
     const albumButton = document.getElementById("albumButton");
     const corkBoard = document.getElementById("corkBoard");
 
-    // ヘッダーに、既に選択済みのチームを表示
+    // ヘッダーに既に選択済みのチームを表示
     const savedTeam = localStorage.getItem("selectedMentor");
     if (savedTeam) {
       mentorSelect.value = savedTeam;
@@ -195,8 +203,7 @@
       if (mentorSelect.value) {
         localStorage.setItem("selectedMentor", mentorSelect.value);
       } else {
-        // corkBoard がある前提のコード
-        if (corkBoard) {
+        if(corkBoard) {
           corkBoard.innerHTML = "";
         }
       }
@@ -207,7 +214,7 @@
       window.location.href = "/post";
     });
 
-    if (albumButton) {
+    if(albumButton) {
       albumButton.addEventListener("click", () => {
         window.location.href = "/";
       });
@@ -218,12 +225,15 @@
     const capturedImage = document.getElementById("capturedImage");
     const switchButton = document.getElementById("switchButton");
     const takePhotoButton = document.getElementById("takePhotoButton");
+    const uploadButton = document.getElementById("uploadButton");
+    const downloadButton = document.getElementById("downloadButton");
     const postButton = document.getElementById("postButton");
     const retakeButton = document.getElementById("retakeButton");
     const dateDisplay = document.getElementById("dateDisplay");
     const themeDisplay = document.getElementById("themeDisplay");
     const themeSelect = document.getElementById("themeSelect");
     const photoPreview = document.getElementById("photoPreview");
+    const uploadInput = document.getElementById("uploadInput");
 
     // 最終的に投稿する画像（photoPreview 全体の base64）
     let finalBase64 = "";
@@ -256,6 +266,7 @@
 
       postButton.style.display = "none";
       retakeButton.style.display = "none";
+      downloadButton.style.display = "none";
     });
 
     themeSelect.addEventListener("change", () => {
@@ -266,17 +277,17 @@
 
     switchButton.addEventListener("click", () => {
       facingMode = (facingMode === "user") ? "environment" : "user";
-      if (cameraVideo.srcObject) {
+      if(cameraVideo.srcObject) {
         cameraVideo.srcObject.getTracks().forEach(track => track.stop());
       }
       startCamera();
     });
 
-    // 画像の読み込みを待機するための関数（タイムアウト3秒を追加）
+    // 画像の読み込みを待機する関数（タイムアウト3秒）
     function ensureImagesLoaded(container) {
       const imgs = container.querySelectorAll("img");
       const promises = Array.from(imgs).map(img => {
-        if (img.complete) return Promise.resolve();
+        if(img.complete) return Promise.resolve();
         return new Promise((resolve, reject) => {
           img.onload = resolve;
           img.onerror = reject;
@@ -290,67 +301,118 @@
       return Promise.race([Promise.all(promises), timeoutPromise]);
     }
 
-    // 「撮影」ボタン: ビデオのみをキャプチャしてプレビューに表示
+    // --- 撮影ボタン: カメラ映像からキャプチャ ---
     takePhotoButton.addEventListener("click", () => {
-      if (themeSelect.value === "0") {
+      if(themeSelect.value === "0") {
         alert("お題を選択してください");
         return;
       }
-
-      // カメラ映像をcanvasに描画し、dataURLを取得
+      // カメラ映像を canvas に描画し dataURL を取得
       const canvas = document.createElement("canvas");
       canvas.width = cameraVideo.videoWidth;
       canvas.height = cameraVideo.videoHeight;
       const ctx = canvas.getContext("2d");
       ctx.drawImage(cameraVideo, 0, 0, canvas.width, canvas.height);
-
-      // 取得した画像を表示
       const dataUrl = canvas.toDataURL("image/png");
       cameraVideo.style.display = "none";
       capturedImage.style.display = "block";
       capturedImage.src = dataUrl;
-
       // ボタン切り替え
       switchButton.style.display = "none";
       takePhotoButton.style.display = "none";
       postButton.style.display = "inline-block";
       retakeButton.style.display = "inline-block";
+      downloadButton.style.display = "inline-block";
     });
 
-    // 「再撮影」ボタン: カメラを再起動
+    // --- アップロードボタン: ファイル入力を起動 ---
+    uploadButton.addEventListener("click", () => {
+      uploadInput.click();
+    });
+
+    // --- アップロードされた画像をチェキ比率にクロップ ---
+    uploadInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          // クロップ処理: 目的の比率 (54/86)
+          const targetRatio = 54 / 86;
+          let cropX = 0, cropY = 0, cropWidth = img.naturalWidth, cropHeight = img.naturalHeight;
+          const currentRatio = img.naturalWidth / img.naturalHeight;
+          if(currentRatio > targetRatio) {
+            // 幅が大きい場合：左右を切り取る
+            cropWidth = img.naturalHeight * targetRatio;
+            cropX = (img.naturalWidth - cropWidth) / 2;
+          } else if(currentRatio < targetRatio) {
+            // 高さが大きい場合：上下を切り取る
+            cropHeight = img.naturalWidth / targetRatio;
+            cropY = (img.naturalHeight - cropHeight) / 2;
+          }
+          // 切り抜いた画像を canvas に描画
+          const canvas = document.createElement("canvas");
+          canvas.width = cropWidth;
+          canvas.height = cropHeight;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+          const dataUrl = canvas.toDataURL("image/png");
+          // プレビュー更新
+          cameraVideo.style.display = "none";
+          capturedImage.style.display = "block";
+          capturedImage.src = dataUrl;
+          // ボタン切り替え
+          switchButton.style.display = "none";
+          takePhotoButton.style.display = "none";
+          postButton.style.display = "inline-block";
+          retakeButton.style.display = "inline-block";
+          downloadButton.style.display = "inline-block";
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // --- ダウンロードボタン: photoPreview 全体を base64 に変換してダウンロード ---
+    downloadButton.addEventListener("click", async () => {
+      try {
+        const dataUrl = await domtoimage.toPng(photoPreview, {
+          crossOrigin: 'anonymous',
+        });
+        const a = document.createElement("a");
+        a.href = dataUrl;
+        a.download = "captured.png";
+        a.click();
+      } catch (err) {
+        console.error("ダウンロードエラー:", err);
+        alert("ダウンロードに失敗しました");
+      }
+    });
+
+    // --- 再撮影ボタン ---
     retakeButton.addEventListener("click", () => {
-      if (cameraVideo.srcObject) {
+      if(cameraVideo.srcObject) {
         cameraVideo.srcObject.getTracks().forEach(track => track.stop());
       }
       startCamera();
-
       switchButton.style.display = "inline-block";
       takePhotoButton.style.display = "inline-block";
       postButton.style.display = "none";
       retakeButton.style.display = "none";
+      downloadButton.style.display = "none";
       finalBase64 = "";
     });
 
-    // 「投稿」ボタン: photoPreview 全体を dom-to-image でキャプチャ → base64 → サーバに送信
+    // --- 投稿ボタン: photoPreview 全体を base64 に変換してサーバへ送信 ---
     postButton.addEventListener("click", async () => {
       const selectedCamp = localStorage.getItem("selectedCamp") || "waseda";
       const selectedMentor = localStorage.getItem("selectedMentor") || "共通";
       const themeId = parseInt(themeSelect.value, 10);
-      if (!themeId) {
+      if(!themeId) {
         alert("お題が選択されていません");
         return;
       }
-
-      // 画像が読み込まれているかを確認
-      // try {
-      //   await ensureImagesLoaded(photoPreview);
-      // } catch (err) {
-      //   console.error("画像の読み込みエラー:", err);
-      //   alert("画像の読み込みに失敗しました");
-      //   return;
-      // }
-
-      // photoPreview 全体を base64 (dataURL) に変換
       try {
         const dataUrl = await domtoimage.toPng(photoPreview, {
           crossOrigin: 'anonymous',
@@ -366,28 +428,26 @@
         alert("投稿用画像の作成に失敗しました");
         return;
       }
-
-      // サーバーにJSON形式で送信
+      // JSON形式で送信
       const postData = {
         place: selectedCamp,
         name: selectedMentor,
         theme: themeId,
         img_link: finalBase64
       };
-
       fetch("https://springcamp2025.onrender.com/post", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(postData)
       })
       .then(res => {
-        if (!res.ok) throw new Error("投稿失敗");
+        if(!res.ok) throw new Error("投稿失敗");
         return res.json();
       })
       .then(data => {
         console.log("投稿結果:", data);
-        //alert("投稿しました！");
-        // window.location.href = "/";
+        alert("投稿しました！");
+        window.location.href = "/";
       })
       .catch(err => {
         console.error(err);
