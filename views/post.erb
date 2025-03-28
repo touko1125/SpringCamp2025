@@ -291,11 +291,10 @@
 
       const scale = 1.05;
       try {
-        await ensureImagesLoaded(photoPreview);
         const dataUrl = await domtoimage.toPng(photoPreview, {
           // height: photoPreview.clientHeight * scale,
           style: {
-            transform: "translateX(-40px)",
+            transform: "translateX(-50px)",
             transformOrigin: "top left",
           },
         });
@@ -345,6 +344,7 @@
         alert("お題が選択されていません");
         return;
       }
+      console.log("投稿データ:", selectedCamp, selectedMentor, themeId, finalBase64);
       const postData = {
         place: selectedCamp,
         name: selectedMentor,
@@ -363,7 +363,7 @@
       .then(data => {
         console.log("投稿結果:", data);
         alert("投稿しました！");
-        window.location.href = "/";
+        //window.location.href = "/";
       })
       .catch(err => {
         console.error(err);
