@@ -197,6 +197,8 @@
         // 保存
         localStorage.setItem("selectedMentor", mentorSelect.value);
       } else {
+        // corkBoard がある前提のコード
+        // 必要なければコメントアウトするなどで対応してください
         corkBoard.innerHTML = "";
       }
     });
@@ -213,7 +215,6 @@
         window.location.href = "/";
       });
     }
-
 
     let facingMode = "user"; 
     const cameraVideo = document.getElementById("cameraVideo");
@@ -250,6 +251,7 @@
       return `${y}.${m}.${d}`;
     }
 
+    // DOMContentLoaded イベント
     window.addEventListener("DOMContentLoaded", () => {
       dateDisplay.textContent = getFormattedDate();
       themeDisplay.textContent = ""; 
@@ -273,48 +275,7 @@
       startCamera();
     });
 
-    takePhotoButton.addEventListener("click", async () => {
-      if (themeSelect.value === "0") {
-        alert("お題を選択してください");
-        return;
-      }
-      const canvas = document.createElement("canvas");
-      canvas.width = cameraVideo.videoWidth;
-      canvas.height = cameraVideo.videoHeight;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(cameraVideo, 0, 0, canvas.width, canvas.height);
-
-      const videoSnapshotBase64 = canvas.toDataURL("image/png");
-      cameraVideo.style.display = "none";
-      capturedImage.src = videoSnapshotBase64;
-      capturedImage.style.display = "block";
-
-      const scale = 1.05;
-      try {
-        const dataUrl = await domtoimage.toPng(document.getElementById("photoPreview"), {
-          // height: photoPreview.clientHeight * scale,
-          crossOrigin: 'anonymous',
-          style: {
-            transform: "translateX(-50px)",
-            transformOrigin: "top left",
-          },
-        });
-        console.log("photoPreview:", document.getElementById("photoPreview"));
-        console.log("dataUrl:", dataUrl);
-        finalBase64 = dataUrl;
-        console.log("dom-to-image で撮影成功");
-      } catch (err) {
-        console.error("チェキDOMキャプチャエラー:", err);
-        alert("撮影に失敗しました");
-        return;
-      }
-
-      switchButton.style.display = "none";
-      takePhotoButton.style.display = "none";
-      postButton.style.display = "inline-block";
-      retakeButton.style.display = "inline-block";
-    });
-
+    // 画像の読み込みを待機するための関数
     function ensureImagesLoaded(container) {
       const imgs = container.querySelectorAll("img");
       const promises = Array.from(imgs).map(img => {
@@ -327,6 +288,63 @@
       return Promise.all(promises);
     }
 
+    // 「撮影」ボタン
+    takePhotoButton.addEventListener("click", async () => {
+      if (themeSelect.value === "0") {
+        alert("お題を選択してください");
+        return;
+      }
+
+      // カメラ映像をcanvasに描画してbase64化
+      const canvas = document.createElement("canvas");
+      canvas.width = cameraVideo.videoWidth;
+      canvas.height = cameraVideo.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(cameraVideo, 0, 0, canvas.width, canvas.height);
+
+      // 取得した画像を表示
+      const videoSnapshotBase64 = canvas.toDataURL("image/png");
+      cameraVideo.style.display = "none";
+      capturedImage.src = videoSnapshotBase64;
+      capturedImage.style.display = "block";
+
+      // ここで画像読み込みを待機
+      try {
+        await ensureImagesLoaded(photoPreview); // 画像が読み込まれるまで待つ
+      } catch (err) {
+        console.error("画像の読み込み中にエラー:", err);
+        alert("画像の読み込みに失敗しました");
+        return;
+      }
+
+      // 画像が読み込まれてから dom-to-image でキャプチャ
+      const scale = 1.05;
+      try {
+        const dataUrl = await domtoimage.toPng(photoPreview, {
+          crossOrigin: 'anonymous',
+          style: {
+            transform: "translateX(-60px)",
+            transformOrigin: "top left",
+          },
+        });
+        console.log("photoPreview:", photoPreview);
+        console.log("dataUrl:", dataUrl);
+        finalBase64 = dataUrl;
+        console.log("dom-to-image で撮影成功");
+      } catch (err) {
+        console.error("チェキDOMキャプチャエラー:", err);
+        alert("撮影に失敗しました");
+        return;
+      }
+
+      // ボタンの表示切り替え
+      switchButton.style.display = "none";
+      takePhotoButton.style.display = "none";
+      postButton.style.display = "inline-block";
+      retakeButton.style.display = "inline-block";
+    });
+
+    // 「再撮影」ボタン
     retakeButton.addEventListener("click", () => {
       if (cameraVideo.srcObject) {
         cameraVideo.srcObject.getTracks().forEach(track => track.stop());
@@ -339,6 +357,7 @@
       retakeButton.style.display = "none";
     });
 
+    // 「投稿」ボタン
     postButton.addEventListener("click", () => {
       const selectedCamp = localStorage.getItem("selectedCamp") || "waseda"; 
       const selectedMentor = localStorage.getItem("selectedMentor") || "共通";
@@ -366,7 +385,7 @@
       .then(data => {
         console.log("投稿結果:", data);
         alert("投稿しました！");
-        //window.location.href = "/";
+        // window.location.href = "/";
       })
       .catch(err => {
         console.error(err);
