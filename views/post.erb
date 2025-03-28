@@ -6,9 +6,6 @@
 
   <!-- 共通CSSファイル -->
   <link rel="stylesheet" href="css/common.css">
-
-  <!-- dom-to-image CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/dist/dom-to-image.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru&family=Sawarabi+Gothic&display=swap" rel="stylesheet" crossorigin="anonymous">
@@ -43,7 +40,6 @@
       padding: 40px 0;
       display: flex;
       justify-content: center;
-
     }
 
     /* 外側の白い枠（チェキ風フレーム）：比率 54:86 */
@@ -189,10 +185,7 @@
       </div>
     </div>
   </div>
-
-  <!-- ======================
-       JavaScriptコード
-     ====================== -->
+  <!-- JavaScriptコードの一部を修正 - modern-screenshot使わずにCanvas APIで実装 -->
   <script>
     const shortCamp = "waseda"; 
     const mentorSelect = document.getElementById("mentorSelect");
@@ -292,46 +285,47 @@
       startCamera();
     });
 
-    // 画像の読み込みを待機する関数（タイムアウト3秒）
-    function ensureImagesLoaded(container) {
-      const imgs = container.querySelectorAll("img");
-      const promises = Array.from(imgs).map(img => {
-        if(img.complete) return Promise.resolve();
-        return new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = reject;
-        });
-      });
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => {
-          reject(new Error("画像の読み込みがタイムアウトしました"));
-        }, 3000);
-      });
-      return Promise.race([Promise.all(promises), timeoutPromise]);
-    }
-
-    // --- 撮影ボタン: カメラ映像からキャプチャ ---
+    // --- 撮影ボタン: カメラ映像からキャプチャ（Canvas API使用） ---
     takePhotoButton.addEventListener("click", () => {
       if(themeSelect.value === "0") {
         alert("お題を選択してください");
         return;
       }
-      // カメラ映像を canvas に描画し dataURL を取得
-      const canvas = document.createElement("canvas");
-      canvas.width = cameraVideo.videoWidth;
-      canvas.height = cameraVideo.videoHeight;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(cameraVideo, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL("image/png");
-      cameraVideo.style.display = "none";
-      capturedImage.style.display = "block";
-      capturedImage.src = dataUrl;
-      // ボタン切り替え
-      switchButton.style.display = "none";
-      takePhotoButton.style.display = "none";
-      postButton.style.display = "inline-block";
-      retakeButton.style.display = "inline-block";
-      downloadButton.style.display = "inline-block";
+      
+      try {
+        // Canvas APIを使用してカメラ映像をキャプチャ
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.width = cameraVideo.videoWidth;
+        canvas.height = cameraVideo.videoHeight;
+        
+        if (!canvas.width || !canvas.height) {
+          console.error("カメラサイズ取得エラー:", cameraVideo.videoWidth, cameraVideo.videoHeight);
+          alert("カメラの準備ができていません。少し待ってからもう一度お試しください。");
+          return;
+        }
+        
+        context.drawImage(cameraVideo, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/png');
+        
+        console.log("カメラ画像キャプチャ成功");
+        
+        // プレビュー更新
+        cameraVideo.style.display = "none";
+        capturedImage.style.display = "block";
+        capturedImage.src = dataUrl;
+        
+        // ボタン切り替え
+        switchButton.style.display = "none";
+        takePhotoButton.style.display = "none";
+        postButton.style.display = "inline-block";
+        retakeButton.style.display = "inline-block";
+        downloadButton.style.display = "inline-block";
+        finalBase64 = dataUrl;
+      } catch (err) {
+        console.error("カメラキャプチャエラー:", err);
+        alert("撮影に失敗しました: " + err.message);
+      }
     });
 
     // --- アップロードボタン: ファイル入力を起動 ---
@@ -377,37 +371,11 @@
           postButton.style.display = "inline-block";
           retakeButton.style.display = "inline-block";
           downloadButton.style.display = "inline-block";
+          finalBase64 = dataUrl;
         };
         img.src = event.target.result;
       };
       reader.readAsDataURL(file);
-    });
-
-    // --- ダウンロードボタン: photoPreview 全体を base64 に変換してダウンロード ---
-    downloadButton.addEventListener("click", async () => {
-      try {
-        domtoimage.toPng(photoPreview, {
-          crossOrigin: 'anonymous',
-        })
-            .then((dataUrl) => {
-              domtoimage.toPng(photoPreview)
-              .then((dataUrl1) => {
-                  const a = document.createElement("a");
-                  a.href = dataUrl;
-                  a.download = "captured.png";
-                  a.click();
-              })
-              .catch((error) => {
-                  console.error('oops, something went wrong!', error);
-              });
-            })
-            .catch((error) => {
-                console.error('oops, something went wrong!', error);
-            });
-      } catch (err) {
-        console.error("ダウンロードエラー:", err);
-        alert("ダウンロードに失敗しました");
-      }
     });
 
     // --- 再撮影ボタン ---
@@ -424,51 +392,253 @@
       finalBase64 = "";
     });
 
-    // --- 投稿ボタン: photoPreview 全体を base64 に変換してサーバへ送信 ---
+    // キャプチャ関数 - html2canvasに依存せずにDOMから画像を作成
+    async function captureElement(element) {
+      return new Promise((resolve, reject) => {
+        try {
+          // 1. キャンバス作成
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          
+          // 高解像度化のために2倍の大きさでレンダリング
+          const scale = 2;
+          const rect = element.getBoundingClientRect();
+          canvas.width = rect.width * scale;
+          canvas.height = rect.height * scale;
+          
+          // 背景色を白に設定
+          context.fillStyle = '#ffffff';
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          context.scale(scale, scale);
+          
+          // 2. 画像と日付・テーマのテキストを描画
+          const mainImage = capturedImage;
+          const photoInner = document.querySelector('.photo-inner');
+          const innerRect = photoInner.getBoundingClientRect();
+          const offsetX = innerRect.left - rect.left;
+          const offsetY = innerRect.top - rect.top;
+          
+          // 3. 現在のスタイル情報を取得
+          const photoInnerStyle = window.getComputedStyle(photoInner);
+          const photoPreviewStyle = window.getComputedStyle(photoPreview);
+          
+          // 4. 外枠の描画（チェキ風フレーム）
+          context.fillStyle = photoPreviewStyle.backgroundColor;
+          context.fillRect(0, 0, rect.width, rect.height);
+          
+          // 5. キャプチャした画像を描画
+          if (mainImage.complete && mainImage.naturalWidth > 0) {
+            context.drawImage(
+              mainImage, 
+              offsetX, offsetY, 
+              innerRect.width, innerRect.height
+            );
+            
+            // 6. 日付とテーマを描画
+            // 日付表示
+            const dateDisplayStyle = window.getComputedStyle(dateDisplay);
+            context.font = dateDisplayStyle.font || '30px "Sawarabi Gothic", sans-serif';
+            context.fillStyle = dateDisplayStyle.color || '#000000';
+            context.textAlign = 'center';
+            const dateRect = dateDisplay.getBoundingClientRect();
+            const dateX = dateRect.left - rect.left + (dateRect.width / 2);
+            const dateY = dateRect.top - rect.top + (dateRect.height / 2) + 15;
+            context.fillText(dateDisplay.textContent, dateX, dateY);
+            
+            // テーマ表示
+            const themeDisplayStyle = window.getComputedStyle(themeDisplay);
+            context.font = themeDisplayStyle.font || '50px "Sawarabi Gothic", sans-serif';
+            context.fillStyle = themeDisplayStyle.color || '#000000';
+            const themeRect = themeDisplay.getBoundingClientRect();
+            const themeX = themeRect.left - rect.left + (themeRect.width / 2);
+            const themeY = themeRect.top - rect.top + (themeRect.height / 2) + 15;
+            context.fillText(themeDisplay.textContent, themeX, themeY);
+            
+            // 7. 画像生成
+            canvas.toBlob((blob) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result);
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            }, 'image/png');
+          } else {
+            reject(new Error('画像が読み込まれていません'));
+          }
+        } catch (err) {
+          console.error('キャプチャエラー:', err);
+          reject(err);
+        }
+      });
+    }
+
+    // ダウンロードボタン: Canvas APIでキャプチャ
+    downloadButton.addEventListener("click", async () => {
+      try {
+        console.log("ダウンロードボタンクリック - Canvasでキャプチャ試行");
+        
+        // 単純な方法:
+        // 画像の代わりに背景にテキストを重ねた別のcanvasを作成する
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const scale = 2; // 高解像度化
+        
+        // チェキサイズを維持
+        const rect = photoPreview.getBoundingClientRect();
+        canvas.width = rect.width * scale;
+        canvas.height = rect.height * scale;
+        
+        // 背景色を設定（チェキの白色）
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.scale(scale, scale);
+        
+        // 元画像描画
+        if (finalBase64) {
+          const img = new Image();
+          img.onload = () => {
+            // photoInnerと同じ位置に画像を描画
+            const photoInner = document.querySelector('.photo-inner');
+            const innerRect = photoInner.getBoundingClientRect();
+            const offsetX = innerRect.left - rect.left;
+            const offsetY = innerRect.top - rect.top;
+            
+            ctx.drawImage(img, offsetX, offsetY, innerRect.width, innerRect.height);
+            
+            // 日付とテーマテキスト描画
+            // 日付
+            ctx.font = '30px "Sawarabi Gothic", sans-serif';
+            ctx.fillStyle = '#000000';
+            ctx.textAlign = 'center';
+            const dateRect = dateDisplay.getBoundingClientRect();
+            const dateX = rect.width / 2;
+            const dateY = rect.height - 30;
+            ctx.fillText(dateDisplay.textContent, dateX, dateY);
+            
+            // テーマ
+            ctx.font = '50px "Sawarabi Gothic", sans-serif';
+            const themeY = rect.height - 120;
+            ctx.fillText(themeDisplay.textContent, rect.width / 2, themeY);
+            
+            // ダウンロード
+            const dataUrl = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = 'photo_' + Date.now() + '.png';
+            link.href = dataUrl;
+            link.click();
+          };
+          img.onerror = (err) => {
+            console.error("画像読み込みエラー:", err);
+            alert("画像処理に失敗しました");
+          };
+          img.src = capturedImage.src;
+        } else {
+          alert("画像がキャプチャされていません");
+        }
+      } catch (error) {
+        console.error("画像変換エラー:", error);
+        alert("ダウンロードに失敗しました: " + error.message);
+      }
+    });
+
+    // 投稿ボタン: Canvas APIを利用
     postButton.addEventListener("click", async () => {
       const selectedCamp = localStorage.getItem("selectedCamp") || "waseda";
       const selectedMentor = localStorage.getItem("selectedMentor") || "共通";
       const themeId = parseInt(themeSelect.value, 10);
+      
       if(!themeId) {
         alert("お題が選択されていません");
         return;
       }
+      
       try {
-        const dataUrl = await domtoimage.toJpeg(photoPreview, {
-          crossOrigin: 'anonymous',
-        });
-        finalBase64 = dataUrl;
-        console.log("dom-to-image で変換成功:", finalBase64);
+        console.log("投稿ボタンクリック - Canvasでキャプチャ試行");
+        
+        // 新しいCanvasを作成してチェキ全体をレンダリング
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const scale = 1.5; // 適切な解像度を維持
+        
+        // チェキサイズを維持
+        const rect = photoPreview.getBoundingClientRect();
+        canvas.width = rect.width * scale;
+        canvas.height = rect.height * scale;
+        
+        // 背景色を設定（チェキの白色）
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.scale(scale, scale);
+        
+        // 元画像描画
+        if (finalBase64) {
+          const img = new Image();
+          img.onload = () => {
+            // photoInnerと同じ位置に画像を描画
+            const photoInner = document.querySelector('.photo-inner');
+            const innerRect = photoInner.getBoundingClientRect();
+            const offsetX = innerRect.left - rect.left;
+            const offsetY = innerRect.top - rect.top;
+            
+            ctx.drawImage(img, offsetX, offsetY, innerRect.width, innerRect.height);
+            
+            // 日付とテーマテキスト描画
+            // 日付
+            ctx.font = '30px "Sawarabi Gothic", sans-serif';
+            ctx.fillStyle = '#000000';
+            ctx.textAlign = 'center';
+            const dateRect = dateDisplay.getBoundingClientRect();
+            const dateX = rect.width / 2;
+            const dateY = rect.height - 30;
+            ctx.fillText(dateDisplay.textContent, dateX, dateY);
+            
+            // テーマ
+            ctx.font = '50px "Sawarabi Gothic", sans-serif';
+            const themeY = rect.height - 120;
+            ctx.fillText(themeDisplay.textContent, rect.width / 2, themeY);
+            
+            // 投稿用データを取得
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            finalBase64 = dataUrl;
+            
+            // サーバーに送信
+            const postData = {
+              place: selectedCamp,
+              name: selectedMentor,
+              theme: themeId,
+              img_link: finalBase64
+            };
+            
+            fetch("https://springcamp2025.onrender.com/post", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(postData)
+            })
+            .then(res => {
+              if(!res.ok) throw new Error("投稿失敗");
+              return res.json();
+            })
+            .then(data => {
+              console.log("投稿結果:", data);
+              alert("投稿しました！");
+              window.location.href = "/";
+            })
+            .catch(err => {
+              console.error(err);
+              alert("投稿に失敗しました");
+            });
+          };
+          img.onerror = (err) => {
+            console.error("画像読み込みエラー:", err);
+            alert("画像処理に失敗しました");
+          };
+          img.src = capturedImage.src;
+        } else {
+          alert("画像がキャプチャされていません");
+        }
       } catch (err) {
-        console.error("dom-to-image エラー:", err);
-        alert("投稿用画像の作成に失敗しました");
-        return;
+        console.error("投稿用画像生成エラー:", err);
+        alert("投稿用画像の作成に失敗しました: " + err.message);
       }
-      // JSON形式で送信
-      const postData = {
-        place: selectedCamp,
-        name: selectedMentor,
-        theme: themeId,
-        img_link: finalBase64
-      };
-      fetch("https://springcamp2025.onrender.com/post", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(postData)
-      })
-      .then(res => {
-        if(!res.ok) throw new Error("投稿失敗");
-        return res.json();
-      })
-      .then(data => {
-        console.log("投稿結果:", data);
-        alert("投稿しました！");
-        window.location.href = "/";
-      })
-      .catch(err => {
-        console.error(err);
-        alert("投稿に失敗しました");
-      });
     });
   </script>
 </body>

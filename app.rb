@@ -88,6 +88,10 @@ post '/post/albumn', provides: :json do
   # 3) 既存のレイアウトで incoming_ids に含まれていないものは削除
   existing_layouts.each do |layout_record|
     unless incoming_ids.include?(layout_record.id)
+      if layout_record.item_type == "photo"
+        post = Post.find_by(id: layout_record.target_id)
+        post.destroy if post
+      end
       layout_record.destroy
     end
   end
