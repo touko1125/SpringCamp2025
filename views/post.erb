@@ -198,7 +198,6 @@
         localStorage.setItem("selectedMentor", mentorSelect.value);
       } else {
         // corkBoard がある前提のコード
-        // 必要なければコメントアウトするなどで対応してください
         corkBoard.innerHTML = "";
       }
     });
@@ -275,17 +274,22 @@
       startCamera();
     });
 
-    // 画像の読み込みを待機するための関数
+    // 画像の読み込みを待機するための関数（タイムアウト3秒を追加）
     function ensureImagesLoaded(container) {
       const imgs = container.querySelectorAll("img");
       const promises = Array.from(imgs).map(img => {
         if (img.complete) return Promise.resolve();
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
           img.onload = resolve;
-          img.onerror = resolve;
+          img.onerror = reject;
         });
       });
-      return Promise.all(promises);
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error("画像の読み込みがタイムアウトしました"));
+        }, 3000);
+      });
+      return Promise.race([Promise.all(promises), timeoutPromise]);
     }
 
     // 「撮影」ボタン
@@ -308,9 +312,9 @@
       capturedImage.src = videoSnapshotBase64;
       capturedImage.style.display = "block";
 
-      // ここで画像読み込みを待機
+      // 画像の読み込みが完了するのを待機（タイムアウト3秒）
       try {
-        await ensureImagesLoaded(photoPreview); // 画像が読み込まれるまで待つ
+        await ensureImagesLoaded(photoPreview);
       } catch (err) {
         console.error("画像の読み込み中にエラー:", err);
         alert("画像の読み込みに失敗しました");
@@ -318,7 +322,6 @@
       }
 
       // 画像が読み込まれてから dom-to-image でキャプチャ
-      const scale = 1.05;
       try {
         const dataUrl = await domtoimage.toPng(photoPreview, {
           crossOrigin: 'anonymous',
