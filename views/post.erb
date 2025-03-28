@@ -11,7 +11,7 @@
   <script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/dist/dom-to-image.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru&family=Sawarabi+Gothic&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru&family=Sawarabi+Gothic&display=swap" rel="stylesheet" crossorigin="anonymous">
   <link rel="shortcut icon" href="/assets/logo.png">
 
   <style>
@@ -177,6 +177,9 @@
        JavaScriptコード
      ====================== -->
   <script>
+  // DOM読み込み完了を待ってから全ての処理を実行する
+  window.addEventListener("DOMContentLoaded", () => {
+
     const shortCamp = "waseda"; // 固定
     const mentorSelect = document.getElementById("mentorSelect");
     const cameraButton = document.getElementById("cameraButton");
@@ -197,7 +200,10 @@
         // 保存
         localStorage.setItem("selectedMentor", mentorSelect.value);
       } else {
-        corkBoard.innerHTML = "";
+        // corkBoard がある前提のコード（必要に応じて削除/修正）
+        if (corkBoard) {
+          corkBoard.innerHTML = "";
+        }
       }
     });
 
@@ -209,11 +215,10 @@
 
     // 「アルバム」ボタン（例：アルバム一覧ページへ移動）
     if (albumButton) {
-        albumButton.addEventListener("click", () => {
+      albumButton.addEventListener("click", () => {
         window.location.href = "/";
       });
     }
-
 
     let facingMode = "user"; 
     const cameraVideo = document.getElementById("cameraVideo");
@@ -250,6 +255,7 @@
       return `${y}.${m}.${d}`;
     }
 
+    // ページ読み込み時（DOM読み込み時）の処理
     window.addEventListener("DOMContentLoaded", () => {
       dateDisplay.textContent = getFormattedDate();
       themeDisplay.textContent = ""; 
@@ -293,6 +299,7 @@
       try {
         const dataUrl = await domtoimage.toPng(document.getElementById("photoPreview"), {
           // height: photoPreview.clientHeight * scale,
+          crossOrigin: 'anonymous',
           style: {
             transform: "translateX(-50px)",
             transformOrigin: "top left",
@@ -372,6 +379,8 @@
         alert("投稿に失敗しました");
       });
     });
+
+  }); // ここで DOMContentLoaded の終了
   </script>
 </body>
 </html>
