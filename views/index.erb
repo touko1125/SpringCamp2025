@@ -132,7 +132,7 @@
         <option value="だーす" data-label="電卓界隈">D：電卓界隈</option>
         <option value="ことりダイキチ" data-label="ジップザップビクトリー！！！">E：ジップザップビクトリー！！！</option>
         <option value="さぁ坊" data-label="満開信号機">F：満開信号機</option>
-        <option value="しーぷ" data-label="別荘<">G：別荘</option>
+        <option value="しーぷ" data-label="別荘">G：別荘</option>
         <option value="ゆわ" data-label="Hydrogens6">H：Hydrogens6</option>
         <option value="ぎる" data-label="HARLIES">I：HARLIES</option>
         <option value="ひとで" data-label="SHERLOCKs">J：SHERLOCKs</option>
@@ -274,6 +274,13 @@
       // ヘッダーに既に選択済みのチームがある場合
       const savedTeam = localStorage.getItem("selectedMentor");
       if (savedTeam) {
+        if(savedTeam === "ことり/ダイキチ") {
+          savedTeam = "ことりダイキチ";
+        }
+        if(savedTeam === "さくこ/まるぴ") {
+          savedTeam = "さくこまるぴ";
+        }
+
         mentorSelect.value = savedTeam;
         cameraButton.disabled = false;
         const selectedOption = mentorSelect.options[mentorSelect.selectedIndex];
