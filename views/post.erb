@@ -177,9 +177,6 @@
        JavaScriptコード
      ====================== -->
   <script>
-  // DOM読み込み完了を待ってから全ての処理を実行する
-  window.addEventListener("DOMContentLoaded", () => {
-
     const shortCamp = "waseda"; // 固定
     const mentorSelect = document.getElementById("mentorSelect");
     const cameraButton = document.getElementById("cameraButton");
@@ -200,10 +197,7 @@
         // 保存
         localStorage.setItem("selectedMentor", mentorSelect.value);
       } else {
-        // corkBoard がある前提のコード（必要に応じて削除/修正）
-        if (corkBoard) {
-          corkBoard.innerHTML = "";
-        }
+        corkBoard.innerHTML = "";
       }
     });
 
@@ -215,10 +209,11 @@
 
     // 「アルバム」ボタン（例：アルバム一覧ページへ移動）
     if (albumButton) {
-      albumButton.addEventListener("click", () => {
+        albumButton.addEventListener("click", () => {
         window.location.href = "/";
       });
     }
+
 
     let facingMode = "user"; 
     const cameraVideo = document.getElementById("cameraVideo");
@@ -255,7 +250,6 @@
       return `${y}.${m}.${d}`;
     }
 
-    // ページ読み込み時（DOM読み込み時）の処理
     window.addEventListener("DOMContentLoaded", () => {
       dateDisplay.textContent = getFormattedDate();
       themeDisplay.textContent = ""; 
@@ -379,8 +373,6 @@
         alert("投稿に失敗しました");
       });
     });
-
-  }); // ここで DOMContentLoaded の終了
   </script>
 </body>
 </html>
