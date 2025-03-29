@@ -142,16 +142,20 @@ get '/album/:username' do
   layout_data = layouts.map do |l|
     if l.item_type == "photo"
       post_obj = Post.find_by(id: l.target_id)
-      {
-        layout_id: l.id,
-        type: "photo",
-        id: l.target_id,
-        img_link: post_obj&.img_link,
-        x: l.x,
-        y: l.y,
-        width: l.width,
-        angle: l.angle
-      }
+      if post_obj
+        {
+          layout_id: l.id,
+          type: "photo",
+          id: l.target_id,
+          img_link: post_obj.img_link,
+          x: l.x,
+          y: l.y,
+          width: l.width,
+          angle: l.angle
+        }
+      else
+        nil # Skip this item if post_obj is nil
+      end
     else
       {
         layout_id: l.id,
@@ -164,7 +168,7 @@ get '/album/:username' do
         angle: l.angle
       }
     end
-  end
+  end.compact # Remove any nil entries
 
   # 4) ユーザーが投稿したが Layout に含まれていない写真を取得
   additional_posts = user.posts.where.not(id: layout_post_ids)

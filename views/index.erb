@@ -490,57 +490,137 @@
       }
     });
 
-    // ----- 3) サーバからレイアウト取得と配置 -----
     function fetchLayoutFromServer(mentorName, corkBoard) {
       if (!mentorName || !corkBoard) return;
+      
+      // Show a loading indicator in the cork board
+      corkBoard.innerHTML = "<div style='text-align: center; margin-top: 40%;'><p>読み込み中...</p></div>";
+      
       const url = `https://springcamp2025.onrender.com/album/${encodeURIComponent(mentorName)}`;
+      console.log("Fetching layout from:", url);
+      
       fetch(url)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) {
+            throw new Error(`Server returned ${res.status}: ${res.statusText}`);
+          }
+          return res.json();
+        })
         .then(data => {
+          console.log("Layout data received, number of items:", data.layout ? data.layout.length : 0);
           if (data.layout && Array.isArray(data.layout)) {
-            renderLayoutToBoard(data.layout, corkBoard);
+            if (data.layout.length === 0) {
+              corkBoard.innerHTML = "";
+              // Add team name display even if there are no items
+              const teamNameDisplay = document.createElement("div");
+              teamNameDisplay.id = "teamNameDisplay";
+              teamNameDisplay.className = "team-name-display";
+              const selectedOption = document.getElementById("mentorSelect").options[document.getElementById("mentorSelect").selectedIndex];
+              teamNameDisplay.textContent = selectedOption.dataset.label;
+              corkBoard.appendChild(teamNameDisplay);
+              console.log("No layout items found for this mentor");
+            } else {
+              renderLayoutToBoard(data.layout, corkBoard);
+            }
           } else {
+            console.error("Invalid layout data format:", data);
             corkBoard.innerHTML = "";
           }
         })
         .catch(err => {
-          console.error("レイアウト取得エラー:", err);
-          corkBoard.innerHTML = "";
+          console.error("Layout fetch error:", err);
+          corkBoard.innerHTML = `<div style='text-align: center; margin-top: 40%; color: red;'>
+            <p>レイアウトの読み込みに失敗しました</p>
+            <p>${err.message}</p>
+          </div>`;
         });
-    }
+      }
 
     function renderLayoutToBoard(layoutArray, corkBoard) {
+      console.log("Rendering layout with", layoutArray.length, "items");
+      
+      // Clear the board
       corkBoard.innerHTML = "";
-      // まず、チーム名表示要素を再作成
+      
+      // First, recreate the team name display
       const teamNameDisplay = document.createElement("div");
       teamNameDisplay.id = "teamNameDisplay";
       teamNameDisplay.className = "team-name-display";
-      const selectedOption = mentorSelect.options[mentorSelect.selectedIndex];
+      const selectedOption = document.getElementById("mentorSelect").options[document.getElementById("mentorSelect").selectedIndex];
       teamNameDisplay.textContent = selectedOption.dataset.label;
       corkBoard.appendChild(teamNameDisplay);
 
-      layoutArray.forEach(item => {
-        if (item.type === "photo" || item.type === "stamp") {
-          const imgEl = document.createElement("img");
-          imgEl.src = item.img_link || stampMapping[item.id] || "";
-          imgEl.alt = `${item.type}-${item.id}`;
-          imgEl.draggable = false;
-          imgEl.style.position = "absolute";
-          imgEl.style.left = (item.x || 20) + "px";
-          imgEl.style.top = (item.y || 20) + "px";
-          imgEl.style.width = (item.width || 100) + "px";
-          imgEl.style.touchAction = "none";
-          imgEl.dataset.type = item.type;
-          imgEl.dataset.id = item.id;
-          imgEl.dataset.layoutId = item.layout_id;
-          if (typeof item.angle === "number") {
-            imgEl.dataset.angle = item.angle;
-            imgEl.style.transform = `rotate(${item.angle}deg)`;
+      // Process all layout items
+      layoutArray.forEach((item, index) => {
+        if (item.type === "stamp") {
+          // Handle stamp items
+          const stampSrc = stampMapping[item.id];
+          if (stampSrc) {
+            console.log(`Adding stamp ${item.id} at position (${item.x}, ${item.y})`);
+            const imgEl = document.createElement("img");
+            imgEl.src = stampSrc;
+            imgEl.alt = `stamp-${item.id}`;
+            imgEl.draggable = false;
+            imgEl.style.position = "absolute";
+            imgEl.style.left = (item.x || 20) + "px";
+            imgEl.style.top = (item.y || 20) + "px";
+            imgEl.style.width = (item.width || 100) + "px";
+            imgEl.style.touchAction = "none";
+            imgEl.dataset.type = item.type;
+            imgEl.dataset.id = item.id;
+            imgEl.dataset.layoutId = item.layout_id;
+            if (typeof item.angle === "number") {
+              imgEl.dataset.angle = item.angle;
+              imgEl.style.transform = `rotate(${item.angle}deg)`;
+            } else {
+              imgEl.dataset.angle = 0;
+            }
+            makeDraggable(imgEl, corkBoard);
+            corkBoard.appendChild(imgEl);
           } else {
-            imgEl.dataset.angle = 0;
+            console.warn(`Stamp mapping not found for ID: ${item.id}`);
           }
-          makeDraggable(imgEl, corkBoard);
-          corkBoard.appendChild(imgEl);
+        } else if (item.type === "photo") {
+          // Handle photo items - only add if img_link exists
+          if (item.img_link) {
+            console.log(`Adding photo at position (${item.x}, ${item.y}) with URL: ${item.img_link.substring(0, 50)}...`);
+            const imgEl = document.createElement("img");
+            imgEl.src = item.img_link;
+            imgEl.alt = `photo-${item.id}`;
+            imgEl.draggable = false;
+            imgEl.style.position = "absolute";
+            imgEl.style.left = (item.x || 20) + "px";
+            imgEl.style.top = (item.y || 20) + "px";
+            imgEl.style.width = (item.width || 200) + "px"; // Photos usually larger
+            imgEl.style.touchAction = "none";
+            imgEl.dataset.type = item.type;
+            imgEl.dataset.id = item.id;
+            imgEl.dataset.layoutId = item.layout_id;
+            if (typeof item.angle === "number") {
+              imgEl.dataset.angle = item.angle;
+              imgEl.style.transform = `rotate(${item.angle}deg)`;
+            } else {
+              imgEl.dataset.angle = 0;
+            }
+            // Add error handling for images
+            imgEl.onerror = function() {
+              console.error(`Failed to load photo image for photo ${item.id}`);
+              this.style.backgroundColor = "#ffdddd";
+              this.style.display = "flex";
+              this.style.alignItems = "center";
+              this.style.justifyContent = "center";
+              this.style.color = "#ff0000";
+              this.style.padding = "10px";
+              this.style.border = "1px dashed #ff0000";
+              this.alt = "画像の読み込みに失敗しました";
+            };
+            makeDraggable(imgEl, corkBoard);
+            corkBoard.appendChild(imgEl);
+          } else {
+            console.warn(`Photo ${item.id} has no img_link, skipping`);
+          }
+        } else {
+          console.warn(`Unknown item type: ${item.type} at index ${index}`);
         }
       });
     }
